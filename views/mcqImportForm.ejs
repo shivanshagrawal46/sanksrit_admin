@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import MCQ Content</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+            --success: #4CAF50;
+            --error: #F44336;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--light);
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            width: 100%;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+        .btn-secondary {
+            background: rgba(103, 111, 157, 0.1);
+            color: var(--primary);
+            border: none;
+        }
+        .btn-secondary:hover {
+            background: rgba(103, 111, 157, 0.2);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <%- include('partials/sidebar', {
+            activePage: null,
+            activeCategory: master.category ? master.category.toString() : null,
+            activeSubCategory: null,
+            koshCategories: koshCategories
+        }) %>
+    </nav>
+    <main class="main-content">
+        <div class="topbar">
+            <h1 class="page-title">Import MCQ Content for <%= master.name %></h1>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <%= username ? username.charAt(0).toUpperCase() : 'A' %>
+                </div>
+            </div>
+        </div>
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="card-title">Import MCQ Content from Excel</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/mcq-content/master/<%= master._id %>/import" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="excel" class="form-label">Excel File</label>
+                        <input type="file" class="form-control" id="excel" name="excel" accept=".xlsx,.xls" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Excel Format:</h6>
+                        <p>Please ensure your Excel file has the following columns:</p>
+                        <ul>
+                            <li>question (required)</li>
+                            <li>option1 (required)</li>
+                            <li>option2 (required)</li>
+                            <li>option3 (optional)</li>
+                            <li>option4 (optional)</li>
+                            <li>correctAnswers (required, comma-separated numbers 1-4)</li>
+                            <li>explanation (required)</li>
+                            <li>references (optional, comma-separated)</li>
+                        </ul>
+                        <p>Example row:</p>
+                        <pre>
+question,option1,option2,option3,option4,correctAnswers,explanation,references
+What is X?,Option A,Option B,Option C,Option D,"1,2",This is the explanation,Ref1, Ref2</pre>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Import MCQs</button>
+                    <a href="/mcq-content/<%= master.category %>?master=<%= master._id %>" class="btn btn-secondary ms-2">Back</a>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html> 

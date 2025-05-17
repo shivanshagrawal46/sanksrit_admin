@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit About Us | Sanskrit Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+            --success: #4CAF50;
+            --error: #F44336;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            border: none;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background: none;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--dark);
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(103, 111, 157, 0.25);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .gallery-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gallery-preview img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .image-preview-container {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <%- include('../partials/sidebar', { 
+            activePage: 'about-us',
+            activeCategory: null,
+            koshCategories: [],
+            mcqCategories: []
+        }) %>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h1 class="page-title">Edit About Us</h1>
+            <a href="/about-us" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to View
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <div class="card-body p-4">
+                <form action="/about-us/edit" method="POST" enctype="multipart/form-data">
+                    <!-- About Our App -->
+                    <div class="mb-4">
+                        <label for="about_app" class="form-label">About Our App</label>
+                        <textarea class="form-control" id="about_app" name="about_app" rows="4" required><%= aboutUs ? aboutUs.about_app : '' %></textarea>
+                    </div>
+
+                    <!-- Our Inspiration -->
+                    <div class="mb-4">
+                        <label for="inspiration" class="form-label">Our Inspiration</label>
+                        <textarea class="form-control" id="inspiration" name="inspiration" rows="4" required><%= aboutUs ? aboutUs.inspiration : '' %></textarea>
+                    </div>
+
+                    <!-- Our Objective -->
+                    <div class="mb-4">
+                        <label for="objective" class="form-label">Our Objective</label>
+                        <textarea class="form-control" id="objective" name="objective" rows="4" required><%= aboutUs ? aboutUs.objective : '' %></textarea>
+                    </div>
+
+                    <!-- Work Ethics -->
+                    <div class="mb-4">
+                        <label for="work_ethics" class="form-label">Work Ethics</label>
+                        <textarea class="form-control" id="work_ethics" name="work_ethics" rows="4" required><%= aboutUs ? aboutUs.work_ethics : '' %></textarea>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="mb-4">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" required><%= aboutUs ? aboutUs.address : '' %></textarea>
+                    </div>
+
+                    <!-- Cover Image -->
+                    <div class="mb-4">
+                        <label for="screen_cover_image" class="form-label">Cover Image</label>
+                        <input type="file" class="form-control" id="screen_cover_image" name="screen_cover_image" accept="image/*" <%= aboutUs ? '' : 'required' %>>
+                        <% if (aboutUs && aboutUs.screen_cover_image) { %>
+                            <div class="image-preview-container">
+                                <img src="<%= aboutUs.screen_cover_image %>" alt="Current Cover Image" class="image-preview">
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Gallery Images -->
+                    <div class="mb-4">
+                        <label for="images" class="form-label">Gallery Images (Up to 5 images)</label>
+                        <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
+                        <% if (aboutUs && aboutUs.images && aboutUs.images.length > 0) { %>
+                            <div class="gallery-preview">
+                                <% aboutUs.images.forEach(image => { %>
+                                    <img src="<%= image %>" alt="Gallery Image">
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

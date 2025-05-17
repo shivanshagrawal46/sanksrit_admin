@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kosh Contents</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #f4f6fb; border-right: 1px solid #e3e6ed; padding-top: 2rem; }
+        .sidebar .nav-link { color: #2d3a4b; font-weight: 500; margin-bottom: 1rem; }
+        .sidebar .nav-link.active { background: #e3e6ed; border-radius: 8px; }
+        .topbar { background: #fff; border-bottom: 1px solid #e3e6ed; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .logo { width: 48px; margin-right: 1rem; }
+        .welcome { font-size: 1.2rem; color: #2d3a4b; font-weight: 600; }
+        .table-responsive { max-height: 70vh; overflow-y: auto; }
+        .img-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar">
+            <%- include('partials/sidebar', {
+                activePage: null,
+                activeCategory: subcategory.parentCategory ? subcategory.parentCategory.toString() : null,
+                activeSubCategory: subcategory._id ? subcategory._id.toString() : null,
+                koshCategories: koshCategories,
+                username: username
+            }) %>
+        </nav>
+        <main class="col-md-10 ms-sm-auto px-4">
+            <div class="topbar">
+                <div class="welcome">Kosh Contents of <%= subcategory.name %></div>
+                <img src="/images/logo.png" class="logo" alt="Logo">
+            </div>
+            <div class="container mt-4">
+                <a href="/kosh-subcategory/<%= subcategory._id %>/add-content" class="btn btn-success mb-3">Add New Content</a>
+                <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>Seq</th>
+                            <th>Hindi</th>
+                            <th>English</th>
+                            <th>Hinglish</th>
+                            <th>Meaning</th>
+                            <th>Extra</th>
+                            <th>Structure</th>
+                            <th>Search</th>
+                            <th>YouTube</th>
+                            <th>Image</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% contents.forEach(function(content, idx) { %>
+                        <tr>
+                            <td><%= content.sequenceNo %></td>
+                            <td><%= content.hindiWord %></td>
+                            <td><%= content.englishWord %></td>
+                            <td><%= content.hinglishWord %></td>
+                            <td><%= content.meaning %></td>
+                            <td><%= content.extra %></td>
+                            <td><%= content.structure %></td>
+                            <td><%= content.search %></td>
+                            <td><a href="<%= content.youtubeLink %>" target="_blank">YouTube</a></td>
+                            <td>
+                                <% if (content.image) { %>
+                                    <img src="<%= content.image %>" class="img-thumb" alt="Image">
+                                <% } %>
+                            </td>
+                            <td><%= content.createdAt.toLocaleString() %></td>
+                            <td>
+                                <a href="/kosh-content/<%= content._id %>/edit" class="btn btn-primary btn-sm">Edit</a>
+                                <form method="POST" action="/kosh-content/<%= content._id %>/delete" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this content?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+                </div>
+                <!-- Pagination -->
+                <nav aria-label="Page navigation">
+                  <ul class="pagination">
+                    <% for(let i=1; i<=totalPages; i++) { %>
+                      <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                      </li>
+                    <% } %>
+                  </ul>
+                </nav>
+                <a href="/kosh-category/<%= subcategory.parentCategory %>/subcategories" class="btn btn-secondary mt-2">Back to Subcategories</a>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html> 

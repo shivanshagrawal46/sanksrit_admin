@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit MCQ Category</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #f4f6fb; border-right: 1px solid #e3e6ed; padding-top: 2rem; }
+        .sidebar .nav-link { color: #2d3a4b; font-weight: 500; margin-bottom: 1rem; }
+        .sidebar .nav-link.active { background: #e3e6ed; border-radius: 8px; }
+        .topbar { background: #fff; border-bottom: 1px solid #e3e6ed; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .logo { width: 48px; margin-right: 1rem; }
+        .welcome { font-size: 1.2rem; color: #2d3a4b; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar">
+            <%- include('partials/sidebar') %>
+        </nav>
+        <main class="col-md-10 ms-sm-auto px-4">
+            <div class="topbar">
+                <div class="welcome">Edit MCQ Category</div>
+                <img src="/images/logo.png" class="logo" alt="Logo">
+            </div>
+            <div class="container mt-4">
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+                <form method="POST" action="/edit-mcq-category/<%= category._id %>">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="<%= category.name %>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="position" class="form-label">Position</label>
+                        <input type="number" class="form-control" id="position" name="position" value="<%= category.position %>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="introduction" class="form-label">Introduction</label>
+                        <textarea class="form-control" id="introduction" name="introduction" rows="4"><%= category.introduction %></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Category</button>
+                    <a href="/mcq-categories" class="btn btn-secondary ms-2">Back</a>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html> 

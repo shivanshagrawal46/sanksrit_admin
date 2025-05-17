@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Kosh Content</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+            --success: #4CAF50;
+            --error: #F44336;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--light);
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+            width: 100%;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+        }
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        .form-control {
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(103, 111, 157, 0.1);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: var(--secondary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        .btn-secondary {
+            background: rgba(103, 111, 157, 0.1);
+            color: var(--secondary);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(103, 111, 157, 0.2);
+            color: var(--primary);
+        }
+        .alert {
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+        .alert-danger {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--error);
+        }
+        .img-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <%- include('partials/sidebar', {
+            activePage: null,
+            activeCategory: subcategory.parentCategory ? subcategory.parentCategory.toString() : null,
+            activeSubCategory: subcategory._id ? subcategory._id.toString() : null,
+            koshCategories: koshCategories
+        }) %>
+    </nav>
+    <main class="main-content">
+        <div class="topbar">
+            <h1 class="page-title">Edit Content of <%= subcategory.name %></h1>
+            <div class="user-menu">
+                <div class="user-avatar">
+                    <%= username ? username.charAt(0).toUpperCase() : 'A' %>
+                </div>
+            </div>
+        </div>
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="card-title">Edit Content of <%= subcategory.name %></h2>
+            </div>
+            <div class="card-body">
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+                <form method="POST" action="/kosh-content/<%= content._id %>/edit" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="sequenceNo" class="form-label">Sequence No</label>
+                        <input type="number" class="form-control" id="sequenceNo" name="sequenceNo" value="<%= content.sequenceNo %>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hindiWord" class="form-label">Hindi Word</label>
+                        <input type="text" class="form-control" id="hindiWord" name="hindiWord" value="<%= content.hindiWord %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="englishWord" class="form-label">English Word</label>
+                        <input type="text" class="form-control" id="englishWord" name="englishWord" value="<%= content.englishWord %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="hinglishWord" class="form-label">Hinglish Word</label>
+                        <input type="text" class="form-control" id="hinglishWord" name="hinglishWord" value="<%= content.hinglishWord %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="meaning" class="form-label">Meaning</label>
+                        <textarea class="form-control" id="meaning" name="meaning" rows="2"><%= content.meaning %></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="extra" class="form-label">Extra</label>
+                        <textarea class="form-control" id="extra" name="extra" rows="2"><%= content.extra %></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="structure" class="form-label">Structure</label>
+                        <textarea class="form-control" id="structure" name="structure" rows="2"><%= content.structure %></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" value="<%= content.search %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="youtubeLink" class="form-label">YouTube Link</label>
+                        <input type="text" class="form-control" id="youtubeLink" name="youtubeLink" value="<%= content.youtubeLink %>">
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image</label>
+                        <% if (content.image) { %>
+                            <img src="<%= content.image %>" class="img-thumb mb-2" alt="Image"><br>
+                        <% } %>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Content</button>
+                    <a href="/kosh-subcategories/<%= subcategory.parentCategory %>?sub=<%= subcategory._id %>" class="btn btn-secondary ms-2">Back</a>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html> 

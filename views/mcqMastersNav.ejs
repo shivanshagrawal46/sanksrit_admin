@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCQ Masters | Sanskrit Admin</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/css/sidebar.css" rel="stylesheet" />
+    <style>
+      :root {
+        --primary: #2d3250;
+        --secondary: #424769;
+        --accent: #676f9d;
+        --light: #f9f9f9;
+        --dark: #1a1b26;
+        --success: #4caf50;
+        --error: #f44336;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--light);
+        min-height: 100vh;
+      }
+      .main-content {
+        margin-left: 280px;
+        padding: 2rem;
+      }
+      .topbar {
+        background: white;
+        padding: 1rem 2rem;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .page-title {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: var(--dark);
+        margin: 0;
+      }
+      .user-menu {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      }
+      .category-nav {
+        display: flex;
+        overflow-x: auto;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1.5rem;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .category-nav-item {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        padding: 0.7rem 1.5rem;
+        border-radius: 10px;
+        font-weight: 500;
+        color: var(--dark);
+        background: transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      .category-nav-item.active,
+      .category-nav-item:hover {
+        background: var(--primary);
+        color: #fff;
+      }
+      .content-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+      }
+      .card-body {
+        padding: 2rem;
+      }
+      /* Button Styles */
+      .btn-primary {
+        background: var(--primary);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary:hover {
+        background: var(--secondary);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+      }
+
+      .btn-secondary {
+        background: rgba(103, 111, 157, 0.1);
+        color: var(--secondary);
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: rgba(103, 111, 157, 0.2);
+        color: var(--primary);
+      }
+
+      /* Table Styles */
+      .table {
+        border-collapse: separate;
+        border-spacing: 0 0.5rem;
+        margin-top: 1rem;
+      }
+
+      .table thead th {
+        background: rgba(103, 111, 157, 0.1);
+        padding: 1rem;
+        color: var(--dark);
+        font-weight: 600;
+        border: none;
+      }
+
+      .table tbody tr {
+        background: white;
+        transition: all 0.3s ease;
+        margin-bottom: 0.5rem;
+        box-shadow: var(--shadow);
+        border-radius: 12px;
+      }
+
+      .table tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border: none;
+      }
+
+      .table td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+      }
+
+      .table td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+
+      .action-btns {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .btn-action {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .btn-edit {
+        background: rgba(103, 111, 157, 0.1);
+        color: var(--accent);
+      }
+
+      .btn-edit:hover {
+        background: rgba(103, 111, 157, 0.2);
+        color: var(--primary);
+      }
+
+      .btn-delete {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error);
+      }
+
+      .btn-delete:hover {
+        background: rgba(244, 67, 54, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="sidebar">
+      <%- include('partials/sidebar', { activePage: 'mcq-categories',
+      activeCategory: category ? category._id.toString() : null,
+      activeSubCategory: selectedMaster ? selectedMaster._id.toString() : null,
+      mcqCategories: mcqCategories, username: username }) %>
+    </nav>
+    <main class="main-content">
+      <div class="topbar">
+        <h1 class="page-title">
+          MCQ Masters for <%= category ? category.name : '' %>
+        </h1>
+        <div class="user-menu">
+          <div class="user-avatar">
+            <%= username ? username.charAt(0).toUpperCase() : 'A' %>
+          </div>
+        </div>
+      </div>
+      <!-- MCQ MASTERS NAVIGATION BAR -->
+      <div class="category-nav mb-4">
+        <% masters.forEach(function(master) { %>
+        <a
+          href="/mcq-content/<%= category._id %>?master=<%= master._id %>"
+          class="category-nav-item <%= (selectedMaster && selectedMaster._id.toString() === master._id.toString()) ? 'active' : '' %>"
+          ><svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            fill="currentColor"
+            style="vertical-align: middle; margin-right: 0.5rem; opacity: 0.7"
+            viewBox="0 0 16 16"
+          >
+            <path d="M2 2h12v12H2z" fill="none" />
+            <path
+              d="M2 2h12v12H2z"
+              stroke="var(--accent)"
+              stroke-width="1.5"
+              fill="none"
+            />
+            <path
+              d="M4 6h8M4 10h8"
+              stroke="var(--primary)"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            />
+          </svg>
+          <%= master.name %>
+        </a>
+        <% }) %>
+      </div>
+      <div
+        class="content-card"
+        style="border-radius: 20px; box-shadow: var(--shadow); overflow: hidden"
+      >
+        <div
+          class="card-header"
+          style="
+            background: var(--primary);
+            color: #fff;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 2rem 2rem 1.25rem 2rem;
+          "
+        >
+          <h2
+            class="card-title"
+            style="
+              font-family: 'Playfair Display', serif;
+              font-size: 1.5rem;
+              margin: 0;
+              display: inline-block;
+            "
+          >
+            MCQ Content for <%= selectedMaster ? selectedMaster.name : '' %>
+          </h2>
+        </div>
+        <div class="card-body" style="padding: 2rem">
+          <% if (selectedMaster) { %>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <a
+                href="/mcq-content/master/<%= selectedMaster._id %>/add"
+                class="btn btn-primary me-2"
+                >Add Content</a
+              >
+              <a
+                href="/mcq-content/master/<%= selectedMaster._id %>/import"
+                class="btn btn-secondary"
+                >Upload Excel</a
+              >
+            </div>
+            <div class="text-muted" style="font-size: 1rem">
+              <% if (contents && contents.length > 0) { %> Showing <%=
+              contents.length %> of <%= contents.length %> items <% } else { %>
+              Showing 0 of 0 items <% } %>
+            </div>
+          </div>
+          <% if (contents && contents.length > 0) { %>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Question</th>
+                  <th>Options</th>
+                  <th>Correct</th>
+                  <th>Explanation</th>
+                  <th>References</th>
+                  <th>Image</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% contents.forEach(function(content, idx) { %>
+                <tr>
+                  <td><%= (currentPage - 1) * 10 + idx + 1 %></td>
+                  <td><%= content.question %></td>
+                  <td>
+                    <ol>
+                      <li><%= content.option1 %></li>
+                      <li><%= content.option2 %></li>
+                      <% if (content.option3) { %>
+                      <li><%= content.option3 %></li>
+                      <% } %> <% if (content.option4) { %>
+                      <li><%= content.option4 %></li>
+                      <% } %>
+                    </ol>
+                  </td>
+                  <td>
+                    <% if (content.correctAnswers &&
+                    content.correctAnswers.length > 0) { %>
+                    <ul>
+                      <% content.correctAnswers.forEach(function(ans) { %>
+                      <li>Option <%= ans %></li>
+                      <% }) %>
+                    </ul>
+                    <% } %>
+                  </td>
+                  <td><%= content.explanation %></td>
+                  <td>
+                    <% if (content.references && content.references.length > 0)
+                    { %>
+                    <ul>
+                      <% content.references.forEach(function(ref) { %>
+                      <li><%= ref %></li>
+                      <% }) %>
+                    </ul>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (content.image) { %>
+                    <img src="<%= content.image %>" style="max-width: 60px" />
+                    <% } %>
+                  </td>
+                  <td>
+                    <a
+                      href="/mcq-content/<%= content._id %>/edit"
+                      class="btn btn-action btn-edit"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path
+                          d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"
+                        /></svg
+                    ></a>
+
+                    <form
+                      method="POST"
+                      action="/mcq-content/<%= content._id %>/delete"
+                      style="display: inline"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-action btn-delete"
+                        onclick="return confirm('Delete this MCQ?')"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          fill="currentColor"
+                          viewBox="0 0 16 16"
+                        >
+                          <path
+                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
+                          />
+                          <path
+                            fill-rule="evenodd"
+                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
+                          />
+                        </svg>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% if (totalPages && totalPages > 1) { %>
+          <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+              <% if (currentPage > 1) { %>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?master=<%= selectedMaster._id %>&page=<%= currentPage - 1 %>"
+                  aria-label="Previous"
+                  >&laquo;</a
+                >
+              </li>
+              <% } %> <% for(let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                <a
+                  class="page-link"
+                  href="?master=<%= selectedMaster._id %>&page=<%= i %>"
+                  ><%= i %></a
+                >
+              </li>
+              <% } %> <% if (currentPage < totalPages) { %>
+              <li class="page-item">
+                <a
+                  class="page-link"
+                  href="?master=<%= selectedMaster._id %>&page=<%= currentPage + 1 %>"
+                  aria-label="Next"
+                  >&raquo;</a
+                >
+              </li>
+              <% } %>
+            </ul>
+          </nav>
+          <% } %> <% } else { %>
+          <div class="text-center py-4" style="font-size: 1.15rem; color: #444">
+            No MCQ content found for this master.
+          </div>
+          <% } %> <% } else { %>
+          <div class="alert alert-warning">
+            Please select an MCQ Master above to view or add content.
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

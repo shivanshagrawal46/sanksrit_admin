@@ -1,0 +1,104 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Admin Panel Specific Styles -->
+<style>
+    :root {
+        --primary: #4e73df;
+        --secondary: #858796;
+        --success: #1cc88a;
+        --info: #36b9cc;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --light: #f8f9fc;
+        --dark: #5a5c69;
+        --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+    
+    body {
+        background: #f8f9fc;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    .sidebar {
+        background: #4e73df;
+        background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+        min-height: 100vh;
+        position: fixed;
+        z-index: 100;
+    }
+
+    .topbar {
+        height: 4.375rem;
+        position: relative;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        border-radius: 0.2rem;
+        margin: 0 0.125rem;
+    }
+
+    .btn-edit {
+        color: var(--warning);
+        border: 1px solid var(--warning);
+    }
+
+    .btn-delete {
+        color: var(--danger);
+        border: 1px solid var(--danger);
+    }
+
+    .btn-edit:hover {
+        background: var(--warning);
+        color: #fff;
+    }
+
+    .btn-delete:hover {
+        background: var(--danger);
+        color: #fff;
+    }
+
+    .card {
+        box-shadow: var(--shadow);
+        border: none;
+        border-radius: 0.35rem;
+    }
+
+    .card-header {
+        background: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.25rem;
+    }
+
+    .card-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+</style> 

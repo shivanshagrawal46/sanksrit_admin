@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Contents</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #f4f6fb; border-right: 1px solid #e3e6ed; padding-top: 2rem; }
+        .sidebar .nav-link { color: #2d3a4b; font-weight: 500; margin-bottom: 1rem; }
+        .sidebar .nav-link.active { background: #e3e6ed; border-radius: 8px; }
+        .topbar { background: #fff; border-bottom: 1px solid #e3e6ed; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .logo { width: 48px; margin-right: 1rem; }
+        .welcome { font-size: 1.2rem; color: #2d3a4b; font-weight: 600; }
+        .table-responsive { max-height: 70vh; overflow-y: auto; }
+        .img-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <%- include('partials/head') %>
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block sidebar">
+                <%- include('partials/sidebar', {
+                    activePage: null,
+                    activeCategory: master ? master._id.toString() : null,
+                    activeSubCategory: null,
+                    koshCategories: koshCategories,
+                    username: username
+                }) %>
+            </nav>
+            <main class="col-md-10 ms-sm-auto px-4">
+                <div class="topbar">
+                    <div class="welcome">MCQ Contents of <%= master.name %></div>
+                    <img src="/images/logo.png" class="logo" alt="Logo">
+                </div>
+                <div class="container mt-4">
+                    <a href="/mcq-content/master/<%= master._id %>/add" class="btn btn-success mb-3">Add New Content</a>
+                    <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Seq</th>
+                                <th>Question</th>
+                                <th>Options</th>
+                                <th>Correct</th>
+                                <th>Explanation</th>
+                                <th>References</th>
+                                <th>Image</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% contents.forEach(function(content, idx) { %>
+                            <tr>
+                                <td><%= idx + 1 %></td>
+                                <td><%= content.question %></td>
+                                <td>
+                                    <ol>
+                                        <% content.options.forEach(function(option) { %>
+                                            <li><%= option %></li>
+                                        <% }) %>
+                                    </ol>
+                                </td>
+                                <td><%= content.options[content.correctAnswer] %></td>
+                                <td><%= content.explanation %></td>
+                                <td>
+                                    <% if (content.references && content.references.length > 0) { %>
+                                        <ul>
+                                            <% content.references.forEach(function(ref) { %>
+                                                <li><%= ref %></li>
+                                            <% }) %>
+                                        </ul>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (content.image) { %>
+                                        <img src="<%= content.image %>" class="img-thumb" alt="Image" onerror="this.style.display='none'">
+                                    <% } %>
+                                </td>
+                                <td><%= content.createdAt.toLocaleString() %></td>
+                                <td>
+                                    <a href="/mcq-content/<%= content._id %>/edit" class="btn btn-primary btn-sm">Edit</a>
+                                    <form method="POST" action="/mcq-content/<%= content._id %>/delete" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this content?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                    </div>
+                    <!-- Pagination -->
+                    <nav aria-label="Page navigation">
+                      <ul class="pagination">
+                        <% for(let i=1; i<=totalPages; i++) { %>
+                          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                            <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                          </li>
+                        <% } %>
+                      </ul>
+                    </nav>
+                    <a href="/mcq-categories" class="btn btn-secondary mt-2">Back to Categories</a>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import MCQs from Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/mcq-content/master/<%= master._id %>/import" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="excel" class="form-label">Excel File</label>
+                            <input type="file" class="form-control" id="excel" name="excel" accept=".xlsx,.xls" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <h6>Excel Format:</h6>
+                            <p>Please ensure your Excel file has the following columns:</p>
+                            <ul>
+                                <li>question</li>
+                                <li>option1</li>
+                                <li>option2</li>
+                                <li>option3</li>
+                                <li>option4</li>
+                                <li>correctAnswer (0-3)</li>
+                                <li>explanation</li>
+                                <li>references (comma-separated)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

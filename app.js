@@ -47,6 +47,9 @@ app.use(express.urlencoded({ extended: true }));
 // Method Override middleware to enable DELETE and PUT methods
 app.use(methodOverride('_method'));
 
+// Trust proxy - Add this before session setup
+app.set('trust proxy', 1);
+
 // Session setup
 app.use(
   session({
@@ -54,13 +57,16 @@ app.use(
     resave: true,
     saveUninitialized: true,
     store: MongoStore.create({ 
-      mongoUrl: process.env.MONGODB_URI
+      mongoUrl: process.env.MONGODB_URI,
+      ttl: 24 * 60 * 60 // 1 day
     }),
     cookie: { 
-      maxAge: 1000 * 60 * 60, // 24 hours
-      secure: process.env.NODE_ENV, // set to true if using https
-      httpOnly: true
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+      secure: true, // Required for HTTPS
+      httpOnly: true,
+      sameSite: 'lax'
     },
+    proxy: true // Required for Nginx
   })
 );
 

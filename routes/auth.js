@@ -6,7 +6,14 @@ const router = express.Router();
 // Login (POST)
 router.post('/login', async (req, res) => {
   try {
-    console.log('Login attempt:', req.body.username);
+    console.log('Login attempt:', {
+      username: req.body.username,
+      headers: req.headers,
+      protocol: req.protocol,
+      secure: req.secure,
+      cookies: req.cookies
+    });
+    
     const { username, password } = req.body;
     
     // Find user
@@ -31,7 +38,12 @@ router.post('/login', async (req, res) => {
     req.session.userId = user._id;
     req.session.username = user.username;
     console.log('Session set for user:', username);
-    console.log('Session data:', req.session);
+    console.log('Session data:', {
+      id: req.session.id,
+      userId: req.session.userId,
+      username: req.session.username,
+      cookie: req.session.cookie
+    });
 
     // Redirect to dashboard
     res.redirect('/dashboard');

@@ -5,18 +5,40 @@ const router = express.Router();
 
 // Login (POST)
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
-  if (!user) {
-    return res.render('login', { error: 'Invalid username or password' });
+  try {
+    console.log('Login attempt:', req.body.username);
+    const { username, password } = req.body;
+    
+    // Find user
+    const user = await User.findOne({ username });
+    console.log('User found:', user ? 'Yes' : 'No');
+    
+    if (!user) {
+      console.log('No user found with username:', username);
+      return res.render('login', { error: 'Invalid username or password' });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch ? 'Yes' : 'No');
+
+    if (!isMatch) {
+      console.log('Password does not match for user:', username);
+      return res.render('login', { error: 'Invalid username or password' });
+    }
+
+    // Set session
+    req.session.userId = user._id;
+    req.session.username = user.username;
+    console.log('Session set for user:', username);
+    console.log('Session data:', req.session);
+
+    // Redirect to dashboard
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Login error:', error);
+    res.render('login', { error: 'An error occurred during login' });
   }
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.render('login', { error: 'Invalid username or password' });
-  }
-  req.session.userId = user._id;
-  req.session.username = user.username;
-  res.redirect('/dashboard');
 });
 
 // Logout

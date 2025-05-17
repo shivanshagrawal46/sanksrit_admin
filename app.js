@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
@@ -25,12 +27,11 @@ const aboutUsRouter = require('./routes/aboutUs');
 const aboutTeamApiRouter = require('./routes/api/aboutTeam');
 const aboutUsApiRouter = require('./routes/api/aboutUs');
 const mediaRouter = require('./routes/media');
-require('dotenv').config();
 
 const app = express();
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://samtaagrawal20:A6cIKbrRdphkrOaL@cluster0.aszthbn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
+mongoose.connect(process.env.MONGODB_URI);
 
 // EJS setup
 app.set('view engine', 'ejs');
@@ -50,14 +51,14 @@ app.use(methodOverride('_method'));
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     store: MongoStore.create({ 
       mongoUrl: process.env.MONGODB_URI
     }),
     cookie: { 
-      maxAge: 1000 * 60 * 60,
-      secure: process.env.NODE_ENV,
+      maxAge: 1000 * 60 * 60, // 24 hours
+      secure: process.env.NODE_ENV, // set to true if using https
       httpOnly: true
     },
   })

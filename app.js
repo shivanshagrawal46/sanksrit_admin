@@ -64,7 +64,8 @@ app.use(
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
       secure: true, // Required for HTTPS
       httpOnly: true,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
     },
     proxy: true // Required for Nginx
   })

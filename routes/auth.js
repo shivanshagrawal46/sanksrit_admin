@@ -11,7 +11,9 @@ router.post('/login', async (req, res) => {
       headers: req.headers,
       protocol: req.protocol,
       secure: req.secure,
-      cookies: req.cookies
+      cookies: req.cookies,
+      host: req.get('host'),
+      xForwardedProto: req.get('x-forwarded-proto')
     });
     
     const { username, password } = req.body;
@@ -37,16 +39,24 @@ router.post('/login', async (req, res) => {
     // Set session
     req.session.userId = user._id;
     req.session.username = user.username;
-    console.log('Session set for user:', username);
-    console.log('Session data:', {
+    
+    // Log session details
+    console.log('Session details after setting:', {
       id: req.session.id,
       userId: req.session.userId,
       username: req.session.username,
       cookie: req.session.cookie
     });
 
-    // Redirect to dashboard
-    res.redirect('/dashboard');
+    // Save session explicitly
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.render('login', { error: 'Session error occurred' });
+      }
+      console.log('Session saved successfully');
+      res.redirect('/dashboard');
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.render('login', { error: 'An error occurred during login' });

@@ -150,6 +150,29 @@ router.get('/kosh-subcategory/:subId/import-excel', requireAuth, async (req, res
   res.render('importKoshContentExcel', { subcategory, error: null, success: null, username: req.session.username, koshCategories });
 });
 
+// Add this function near the top of the file
+function generateTable(fieldLabel, wordsString) {
+    const rowHeaders = ['प्रथमपुरुषः', 'मध्यमपुरुषः', 'उत्तमपुरुषः'];
+    const colHeaders = ['एकवचनम्', 'द्विवचनम्', 'बहुवचनम्'];
+    const words = wordsString.split(';').map(w => w.trim());
+    let html = `<h4>${fieldLabel}</h4>`;
+    html += '<table border="1" style="border-collapse:collapse;text-align:center;width:auto;">';
+    html += '<tr><th>विभक्‍ति</th>';
+    colHeaders.forEach(h => html += `<th>${h}</th>`);
+    html += '</tr>';
+    let idx = 0;
+    for (let i = 0; i < 3; i++) {
+        html += `<tr><th>${rowHeaders[i]}</th>`;
+        for (let j = 0; j < 3; j++) {
+            html += `<td>${words[idx] || ''}</td>`;
+            idx++;
+        }
+        html += '</tr>';
+    }
+    html += '</table><br/>';
+    return html;
+}
+
 // Excel import (POST)
 router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single('excel'), async (req, res) => {
   const subcategory = await KoshSubCategory.findById(req.params.subId);
@@ -199,12 +222,30 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
     }
 
     // Map and validate the data
+    const fields = [
+        { key: 'lath', label: 'लट् (वर्तमान)' },
+        { key: 'lith', label: 'लिट् (परोक्ष)' },
+        { key: 'luth', label: 'लुट् (अनद्यतन भविष्यत्)' },
+        { key: 'laruth', label: 'लृट् (अद्यतन भविष्यत्)' },
+        { key: 'loth', label: 'लोट् (आज्ञार्थ)' },
+        { key: 'ladh', label: 'लङ् (अनद्यतन भूत)' },
+        { key: 'vidhilidh', label: 'विधिलिङ्' },
+        { key: 'aashirlidh', label: 'आशीर्लिङ्' },
+        { key: 'ludh', label: 'लुङ् (अद्यतन भूत)' },
+        { key: 'laradh', label: 'लृङ् (भविष्यत्)' }
+    ];
     const contents = rows.map((row, index) => {
       const sequenceNo = row.sequenceNo || row.SequenceNo;
       if (!sequenceNo || isNaN(sequenceNo)) {
         throw new Error(`Invalid sequence number in row ${index + 2}`);
       }
-
+      let structureHtml = '';
+      fields.forEach(field => {
+        const value = row[field.key] || row[field.key.charAt(0).toUpperCase() + field.key.slice(1)];
+        if (value) {
+          structureHtml += generateTable(field.label, value);
+        }
+      });
       return {
         subCategory: req.params.subId,
         sequenceNo: parseInt(sequenceNo),
@@ -213,7 +254,7 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
         hinglishWord: row.hinglishWord || row.HinglishWord || '',
         meaning: row.meaning || row.Meaning || '',
         extra: row.extra || row.Extra || '',
-        structure: row.structure || row.Structure || '',
+        structure: structureHtml,
         search: row.search || row.Search || '',
         youtubeLink: row.youtubeLink || row.YouTubeLink || '',
         image: row.image || row.Image || ''

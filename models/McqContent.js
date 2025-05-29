@@ -9,7 +9,7 @@ const mcqContentSchema = new mongoose.Schema({
   option3: { type: String },
   option4: { type: String },
   correctAnswers: [{ type: Number, required: true, min: 1, max: 4 }],
-  explanation: { type: String, required: true },
+  explanation: { type: String},
   references: [{ type: String }],
   image: { type: String },
   isActive: { type: Boolean, default: true }

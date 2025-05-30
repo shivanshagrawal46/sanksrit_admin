@@ -34,16 +34,22 @@ router.get('/kosh-category/:parentId/add-subcategory', requireAuth, async (req, 
 
 // Add subcategory (POST)
 router.post('/kosh-category/:parentId/add-subcategory', requireAuth, async (req, res) => {
-  const { name, position, introduction } = req.body;
+  const { name, position, introduction, cover_image } = req.body;
   try {
-    await KoshSubCategory.create({ parentCategory: req.params.parentId, name, position, introduction });
-    res.redirect(`/kosh-subcategories?category=${req.params.parentId}`);
+    await KoshSubCategory.create({ 
+      name, 
+      position, 
+      introduction, 
+      cover_image,
+      parentCategory: req.params.parentId 
+    });
+    res.redirect(`/kosh-subcategories/${req.params.parentId}`);
   } catch (err) {
     const parent = await KoshCategory.findById(req.params.parentId);
     res.render('addKoshSubCategory', { 
       parent, 
-      error: 'All fields required.',
-      username: req.session.username
+      error: 'Error creating subcategory.',
+      username: req.session.username || 'Admin'
     });
   }
 });
@@ -62,18 +68,24 @@ router.get('/kosh-subcategory/:id/edit', requireAuth, async (req, res) => {
 
 // Edit subcategory (POST)
 router.post('/kosh-subcategory/:id/edit', requireAuth, async (req, res) => {
-  const { name, position, introduction } = req.body;
-  const subcategory = await KoshSubCategory.findById(req.params.id);
+  const { name, position, introduction, cover_image } = req.body;
   try {
-    await KoshSubCategory.findByIdAndUpdate(req.params.id, { name, position, introduction });
-    res.redirect(`/kosh-subcategories?category=${subcategory.parentCategory}`);
+    await KoshSubCategory.findByIdAndUpdate(req.params.id, { 
+      name, 
+      position, 
+      introduction, 
+      cover_image 
+    });
+    const subcategory = await KoshSubCategory.findById(req.params.id);
+    res.redirect(`/kosh-subcategories/${subcategory.parentCategory}`);
   } catch (err) {
+    const subcategory = await KoshSubCategory.findById(req.params.id);
     const parent = await KoshCategory.findById(subcategory.parentCategory);
     res.render('editKoshSubCategory', { 
       subcategory, 
       parent, 
       error: 'Error updating subcategory.',
-      username: req.session.username
+      username: req.session.username || 'Admin'
     });
   }
 });

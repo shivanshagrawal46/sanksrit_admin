@@ -32,9 +32,9 @@ router.get('/kosh-categories/add', requireAuth, (req, res) => {
 
 // Add Kosh Category (POST)
 router.post('/kosh-categories/add', requireAuth, async (req, res) => {
-  const { name, position, introduction } = req.body;
+  const { name, position, introduction, cover_image } = req.body;
   try {
-    await KoshCategory.create({ name, position, introduction });
+    await KoshCategory.create({ name, position, introduction, cover_image });
     res.redirect('/kosh-categories');
   } catch (err) {
     res.render('addKoshCategory', { 
@@ -56,9 +56,9 @@ router.get('/kosh-categories/:id/edit', requireAuth, async (req, res) => {
 
 // Edit Kosh Category (POST)
 router.post('/kosh-categories/:id/edit', requireAuth, async (req, res) => {
-  const { name, position, introduction } = req.body;
+  const { name, position, introduction, cover_image } = req.body;
   try {
-    await KoshCategory.findByIdAndUpdate(req.params.id, { name, position, introduction });
+    await KoshCategory.findByIdAndUpdate(req.params.id, { name, position, introduction, cover_image });
     res.redirect('/kosh-categories');
   } catch (err) {
     const category = await KoshCategory.findById(req.params.id);

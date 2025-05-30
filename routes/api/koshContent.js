@@ -93,13 +93,57 @@ router.get('/category/:categoryId', async (req, res) => {
     }
 });
 
+// Get vishesh_suchi (unique search terms) for a subcategory
+router.get('/vishesh-suchi/:subcategoryId', async (req, res) => {
+    try {
+        const contents = await KoshContent.find({ subcategory: req.params.subcategoryId })
+            .select('search');
+        
+        // Extract all search terms and remove duplicates
+        const allSearchTerms = contents
+            .map(content => content.search)
+            .filter(term => term) // Remove null/undefined
+            .join(',')
+            .split(',')
+            .map(term => term.trim())
+            .filter(term => term) // Remove empty strings
+            .filter((term, index, self) => self.indexOf(term) === index); // Remove duplicates
+
+        res.json({ vishesh_suchi: allSearchTerms });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Get contents by subcategory
 router.get('/subcategory/:subcategoryId', async (req, res) => {
     try {
+        console.log('1. Starting subcategory route for ID:', req.params.subcategoryId);
+        
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
+        // First get all contents to build vishesh_suchi
+        const allContents = await KoshContent.find({ subcategory: req.params.subcategoryId });
+        console.log('2. Found total contents:', allContents.length);
+
+        // Process search terms
+        const searchTermsSet = new Set();
+        allContents.forEach(content => {
+            if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
+                const terms = content.search.split(',')
+                    .map(term => term.trim())
+                    .filter(term => term !== '');
+                terms.forEach(term => searchTermsSet.add(term));
+            }
+        });
+
+        // Convert Set to sorted array
+        const vishesh_suchi = Array.from(searchTermsSet).sort();
+        console.log('3. Extracted vishesh_suchi:', vishesh_suchi);
+
+        // Get paginated contents
         const contents = await KoshContent.find({ subcategory: req.params.subcategoryId })
             .populate('category', 'name')
             .populate('subcategory', 'name')
@@ -108,15 +152,23 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
             .limit(limit);
 
         const total = await KoshContent.countDocuments({ subcategory: req.params.subcategoryId });
+        console.log('4. Found paginated contents:', contents.length);
 
-        res.json({
-            contents,
+        // Construct response
+        const response = {
+            vishesh_suchi: vishesh_suchi,
+            contents: contents,
             currentPage: page,
             totalPages: Math.ceil(total / limit),
             totalContents: total
-        });
+        };
+
+        console.log('5. Sending response with vishesh_suchi length:', response.vishesh_suchi.length);
+        return res.json(response);
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error in subcategory route:', error);
+        return res.status(500).json({ message: error.message });
     }
 });
 

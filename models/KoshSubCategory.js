@@ -7,6 +7,7 @@ const koshSubCategorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   position: { type: Number, required: true },
   introduction: { type: String },
+  cover_image: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

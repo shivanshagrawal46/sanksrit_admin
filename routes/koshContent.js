@@ -150,6 +150,128 @@ router.get('/kosh-subcategory/:subId/import-excel', requireAuth, async (req, res
   res.render('importKoshContentExcel', { subcategory, error: null, success: null, username: req.session.username, koshCategories });
 });
 
+// Export Excel template (GET)
+router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, res) => {
+  try {
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Define the headers for the Excel template
+    const headers = [
+      'sequenceNo',
+      'hindiWord', 
+      'englishWord',
+      'hinglishWord',
+      'meaning',
+      'extra',
+      'search',
+      'youtubeLink',
+      'image',
+      'lath',
+      'lith', 
+      'luth',
+      'laruth',
+      'loth',
+      'ladh',
+      'vidhilidh',
+      'aashirlidh',
+      'ludh',
+      'laradh'
+    ];
+
+    // Create sample data rows with examples
+    const sampleData = [
+      {
+        sequenceNo: 1,
+        hindiWord: 'गच्छति',
+        englishWord: 'goes',
+        hinglishWord: 'jata hai',
+        meaning: 'goes (present tense)',
+        extra: 'Additional information',
+        search: 'गच्छति,goes',
+        youtubeLink: 'https://youtube.com/watch?v=example',
+        image: 'image_url_or_filename.jpg',
+        lath: 'गच्छति;गच्छतः;गच्छन्ति;गच्छसि;गच्छथः;गच्छथ;गच्छामि;गच्छावः;गच्छामः',
+        lith: 'जगाम;जगामतुः;जग्मुः;जगमिथ;जगमथुः;जगम;जगाम;जगामिव;जगामिम',
+        luth: 'गन्ता;गन्तारौ;गन्तारः;गन्तासि;गन्तास्थः;गन्तास्थ;गन्तास्मि;गन्तास्वः;गन्तास्मः',
+        laruth: 'गमिष्यति;गमिष्यतः;गमिष्यन्ति;गमिष्यसि;गमिष्यथः;गमिष्यथ;गमिष्यामि;गमिष्यावः;गमिष्यामः',
+        loth: 'गच्छतु;गच्छताम्;गच्छन्तु;गच्छ;गच्छतम्;गच्छत;गच्छानि;गच्छाव;गच्छाम',
+        ladh: 'अगच्छत्;अगच्छताम्;अगच्छन्;अगच्छः;अगच्छतम्;अगच्छत;अगच्छम्;अगच्छाव;अगच्छाम',
+        vidhilidh: 'गच्छेत्;गच्छेताम्;गच्छेयुः;गच्छेः;गच्छेतम्;गच्छेत;गच्छेयम्;गच्छेव;गच्छेम',
+        aashirlidh: 'गच्छेत्;गच्छेताम्;गच्छेयुः;गच्छेः;गच्छेतम्;गच्छेत;गच्छेयम्;गच्छेव;गच्छेम',
+        ludh: 'अगमत्;अगमताम्;अगमन्;अगमः;अगमतम्;अगमत;अगमम्;अगमाव;अगमाम',
+        laradh: 'अगमिष्यत्;अगमिष्यताम्;अगमिष्यन्;अगमिष्यः;अगमिष्यतम्;अगमिष्यत;अगमिष्यम्;अगमिष्याव;अगमिष्याम'
+      },
+      {
+        sequenceNo: 2,
+        hindiWord: 'पठति',
+        englishWord: 'reads',
+        hinglishWord: 'padhta hai',
+        meaning: 'reads (present tense)',
+        extra: 'Additional information',
+        search: 'पठति,reads',
+        youtubeLink: '',
+        image: '',
+        lath: 'पठति;पठतः;पठन्ति;पठसि;पठथः;पठथ;पठामि;पठावः;पठामः',
+        lith: 'पपाठ;पपाठतुः;पपठुः;पपाठिथ;पपाठथुः;पपाठ;पपाठ;पपाठिव;पपाठिम',
+        luth: 'पट्टा;पट्टारौ;पट्टारः;पट्टासि;पट्टास्थः;पट्टास्थ;पट्टास्मि;पट्टास्वः;पट्टास्मः',
+        laruth: 'पठिष्यति;पठिष्यतः;पठिष्यन्ति;पठिष्यसि;पठिष्यथः;पठिष्यथ;पठिष्यामि;पठिष्यावः;पठिष्यामः',
+        loth: 'पठतु;पठताम्;पठन्तु;पठ;पठतम्;पठत;पठानि;पठाव;पठाम',
+        ladh: 'अपठत्;अपठताम्;अपठन्;अपठः;अपठतम्;अपठत;अपठम्;अपठाव;अपठाम',
+        vidhilidh: 'पठेत्;पठेताम्;पठेयुः;पठेः;पठेतम्;पठेत;पठेयम्;पठेव;पठेम',
+        aashirlidh: 'पठेत्;पठेताम्;पठेयुः;पठेः;पठेतम्;पठेत;पठेयम्;पठेव;पठेम',
+        ludh: 'अपठत्;अपठताम्;अपठन्;अपठः;अपठतम्;अपठत;अपठम्;अपठाव;अपठाम',
+        laradh: 'अपठिष्यत्;अपठिष्यताम्;अपठिष्यन्;अपठिष्यः;अपठिष्यतम्;अपठिष्यत;अपठिष्यम्;अपठिष्याव;अपठिष्याम'
+      }
+    ];
+
+    // Create worksheet with headers and sample data
+    const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    
+    // Set column widths for better readability
+    const columnWidths = [
+      { wch: 12 }, // sequenceNo
+      { wch: 15 }, // hindiWord
+      { wch: 15 }, // englishWord
+      { wch: 15 }, // hinglishWord
+      { wch: 25 }, // meaning
+      { wch: 20 }, // extra
+      { wch: 20 }, // search
+      { wch: 30 }, // youtubeLink
+      { wch: 20 }, // image
+      { wch: 80 }, // lath
+      { wch: 80 }, // lith
+      { wch: 80 }, // luth
+      { wch: 80 }, // laruth
+      { wch: 80 }, // loth
+      { wch: 80 }, // ladh
+      { wch: 80 }, // vidhilidh
+      { wch: 80 }, // aashirlidh
+      { wch: 80 }, // ludh
+      { wch: 80 }  // laradh
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Add the worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Kosh Content Template');
+    
+    // Set response headers for file download
+    const subcategory = await KoshSubCategory.findById(req.params.subId);
+    const filename = `kosh_content_template_${subcategory.name.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Generate and send the Excel file
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.send(buffer);
+    
+  } catch (error) {
+    console.error('Error generating Excel template:', error);
+    res.status(500).send('Error generating Excel template');
+  }
+});
+
 // Add this function near the top of the file
 function generateTable(fieldLabel, wordsString) {
     const rowHeaders = ['प्रथमपुरुषः', 'मध्यमपुरुषः', 'उत्तमपुरुषः'];

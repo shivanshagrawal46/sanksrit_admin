@@ -62,9 +62,9 @@ app.use(
     }),
     cookie: { 
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      //secure: true, // Required for HTTPS
-      secure: false,
-      //httpOnly: true,
+      secure: true, // Required for HTTPS
+      //secure: false,
+      httpOnly: true,
       sameSite: 'lax',
       path: '/'
     },

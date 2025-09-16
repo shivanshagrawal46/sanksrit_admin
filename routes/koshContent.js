@@ -204,24 +204,45 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       },
       {
         sequenceNo: 2,
+        hindiWord: '',
+        englishWord: '',
+        hinglishWord: '',
+        meaning: '',
+        extra: '',
+        search: '',
+        youtubeLink: '',
+        image: '',
+        lath: '',
+        lith: '',
+        luth: '',
+        laruth: '',
+        loth: '',
+        ladh: '',
+        vidhilidh: '',
+        aashirlidh: '',
+        ludh: '',
+        laradh: ''
+      },
+      {
+        sequenceNo: 3,
         hindiWord: 'पठति',
         englishWord: 'reads',
-        hinglishWord: 'padhta hai',
+        hinglishWord: '',
         meaning: 'reads (present tense)',
-        extra: 'Additional information',
+        extra: '',
         search: 'पठति,reads',
         youtubeLink: '',
         image: '',
-        lath: 'पठति;पठतः;पठन्ति;पठसि;पठथः;पठथ;पठामि;पठावः;पठामः',
-        lith: 'पपाठ;पपाठतुः;पपठुः;पपाठिथ;पपाठथुः;पपाठ;पपाठ;पपाठिव;पपाठिम',
-        luth: 'पट्टा;पट्टारौ;पट्टारः;पट्टासि;पट्टास्थः;पट्टास्थ;पट्टास्मि;पट्टास्वः;पट्टास्मः',
-        laruth: 'पठिष्यति;पठिष्यतः;पठिष्यन्ति;पठिष्यसि;पठिष्यथः;पठिष्यथ;पठिष्यामि;पठिष्यावः;पठिष्यामः',
-        loth: 'पठतु;पठताम्;पठन्तु;पठ;पठतम्;पठत;पठानि;पठाव;पठाम',
-        ladh: 'अपठत्;अपठताम्;अपठन्;अपठः;अपठतम्;अपठत;अपठम्;अपठाव;अपठाम',
-        vidhilidh: 'पठेत्;पठेताम्;पठेयुः;पठेः;पठेतम्;पठेत;पठेयम्;पठेव;पठेम',
-        aashirlidh: 'पठेत्;पठेताम्;पठेयुः;पठेः;पठेतम्;पठेत;पठेयम्;पठेव;पठेम',
-        ludh: 'अपठत्;अपठताम्;अपठन्;अपठः;अपठतम्;अपठत;अपठम्;अपठाव;अपठाम',
-        laradh: 'अपठिष्यत्;अपठिष्यताम्;अपठिष्यन्;अपठिष्यः;अपठिष्यतम्;अपठिष्यत;अपठिष्यम्;अपठिष्याव;अपठिष्याम'
+        lath: '',
+        lith: '',
+        luth: '',
+        laruth: '',
+        loth: '',
+        ladh: '',
+        vidhilidh: '',
+        aashirlidh: '',
+        ludh: '',
+        laradh: ''
       }
     ];
 
@@ -327,16 +348,16 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
       });
     }
 
-    // Validate required fields
-    const requiredFields = ['sequenceNo', 'hindiWord', 'englishWord', 'meaning'];
-    const missingFields = rows.some(row => 
-      requiredFields.some(field => !row[field] && !row[field.charAt(0).toUpperCase() + field.slice(1)])
-    );
+    // Validate only sequenceNo is required
+    const missingSequenceNo = rows.some(row => {
+      const seqNo = row.sequenceNo || row.SequenceNo;
+      return !seqNo || isNaN(seqNo);
+    });
 
-    if (missingFields) {
+    if (missingSequenceNo) {
       return res.render('importKoshContentExcel', {
         subcategory,
-        error: 'Excel file is missing required fields: sequenceNo, hindiWord, englishWord, meaning',
+        error: 'Excel file must have valid sequenceNo values for all rows. Other fields are optional.',
         success: null,
         username: req.session.username,
         koshCategories

@@ -3,9 +3,7 @@ const router = express.Router();
 const KoshContent = require('../../models/KoshContent');
 const auth = require('../../middleware/auth');
 
-console.log('========================================');
-console.log('KOSH CONTENT API LOADED - VERSION WITH HINDI SORTING - 2025-01-02');
-console.log('========================================');
+console.log('[Kosh Content API] Hindi alphabetical sorting enabled');
 
 // Hindi alphabet order for sorting
 const hindiAlphabet = [
@@ -173,7 +171,9 @@ router.get('/', async (req, res) => {
         const skip = (page - 1) * limit;
 
         // Get all contents for sorting - use .lean() for plain objects
+        // Select only necessary fields to reduce memory usage
         const allContents = await KoshContent.find()
+            .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
             .lean();
 
@@ -212,7 +212,9 @@ router.get('/search', async (req, res) => {
             ]
         };
 
+        // Select only necessary fields to reduce memory usage
         const allContents = await KoshContent.find(searchQuery)
+            .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
             .lean();
 
@@ -249,15 +251,15 @@ router.get('/category/:categoryId', async (req, res) => {
         const subcategoryIds = subcategories.map(sub => sub._id);
 
         // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
+        // Select only necessary fields to reduce memory usage
         const allContents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
+            .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
             .lean();
-        console.log('Category API - Found total contents:', allContents.length);
 
-        // Process search terms
+        // Process search terms (optimized - no excessive logging)
         const searchTermsSet = new Set();
-        allContents.forEach((content, index) => {
-            console.log(`Category Content ${index + 1} search field: "${content.search}"`);
+        allContents.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())
@@ -296,42 +298,28 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         const skip = (page - 1) * limit;
 
         // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
+        // Select only necessary fields to reduce memory usage
         const allContents = await KoshContent.find({ subCategory: req.params.subcategoryId })
+            .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
             .lean();
-        console.log('1. Found total contents for subcategory:', allContents.length);
 
-        // Process search terms
+        // Process search terms (optimized - no excessive logging)
         const searchTermsSet = new Set();
-        allContents.forEach((content, index) => {
-            console.log(`Content ${index + 1} search field: "${content.search}" (type: ${typeof content.search})`);
+        allContents.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())
                     .filter(term => term !== '');
-                console.log(`Content ${index + 1} extracted terms:`, terms);
                 terms.forEach(term => searchTermsSet.add(term));
             }
         });
 
         // Convert Set to sorted array
         const vishesh_suchi = Array.from(searchTermsSet).sort();
-        console.log('2. Extracted vishesh_suchi:', vishesh_suchi);
-
-        // DEBUG: Check data before sorting
-        console.log('3. BEFORE SORTING - First 5 items:');
-        allContents.slice(0, 5).forEach((item, idx) => {
-            console.log(`   ${idx + 1}. hindiWord: "${item.hindiWord}", sequenceNo: ${item.sequenceNo}, id: ${item.id}`);
-        });
 
         // Sort all contents by Hindi word alphabetically
         const sortedContents = sortByHindiWord(allContents);
-
-        // DEBUG: Check data after sorting
-        console.log('4. AFTER SORTING - First 5 items:');
-        sortedContents.slice(0, 5).forEach((item, idx) => {
-            console.log(`   ${idx + 1}. hindiWord: "${item.hindiWord}", sequenceNo: ${item.sequenceNo}, id: ${item.id}`);
-        });
 
         // Apply pagination after sorting
         const total = sortedContents.length;
@@ -346,7 +334,6 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
             totalContents: total
         };
 
-        console.log('3. Final response structure:', Object.keys(response));
         res.json(response);
     } catch (error) {
         console.error('Error in subcategory API:', error);

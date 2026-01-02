@@ -88,13 +88,24 @@ router.get('/kosh-subcategories/:categoryId', requireAuth, async (req, res) => {
     // Determine selected subcategory
     let selectedSubCategoryId = req.query.sub || subcategories[0]._id.toString();
     const selectedSubCategory = subcategories.find(sub => sub._id.toString() === selectedSubCategoryId) || subcategories[0];
+    // Search query
+    const searchQuery = req.query.search || '';
+    // Build query with search
+    const query = { subCategory: selectedSubCategory._id };
+    if (searchQuery) {
+      query.$or = [
+        { hindiWord: { $regex: searchQuery, $options: 'i' } },
+        { englishWord: { $regex: searchQuery, $options: 'i' } },
+        { hinglishWord: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
     // Pagination for content
     const page = parseInt(req.query.page) || 1;
-    const limit = 10;
+    const limit = 50;
     const skip = (page - 1) * limit;
-    const contentTotal = await KoshContent.countDocuments({ subCategory: selectedSubCategory._id });
-    const contents = await KoshContent.find({ subCategory: selectedSubCategory._id })
-      .sort({ sequenceNo: 1 })
+    const contentTotal = await KoshContent.countDocuments(query);
+    const contents = await KoshContent.find(query)
+      .sort({ hindiWord: 1, englishWord: 1 })
       .skip(skip)
       .limit(limit);
     const totalPages = Math.ceil(contentTotal / limit) || 1;
@@ -111,7 +122,8 @@ router.get('/kosh-subcategories/:categoryId', requireAuth, async (req, res) => {
       contentTotal,
       subcategoryMode: false,
       activePage: null,
-      activeCategory: req.params.categoryId
+      activeCategory: req.params.categoryId,
+      searchQuery: searchQuery
     });
   } catch (err) {
     console.error(err);

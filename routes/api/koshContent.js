@@ -3,165 +3,7 @@ const router = express.Router();
 const KoshContent = require('../../models/KoshContent');
 const auth = require('../../middleware/auth');
 
-console.log('[Kosh Content API] Hindi alphabetical sorting enabled');
-
-// Hindi alphabet order for sorting
-const hindiAlphabet = [
-    'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ', 'अं', 'अः',
-    'क', 'ख', 'ग', 'घ', 'च', 'छ', 'ज', 'झ', 'ट', 'ठ', 'ड', 'ढ', 'न',
-    'प', 'फ', 'ब', 'भ', 'म', 'य', 'र', 'ल', 'व', 'श', 'ष', 'स', 'ह',
-    'क्ष', 'ज्ञ', 'ल'
-];
-
-// Create a map for quick lookup
-const hindiCharOrder = {};
-hindiAlphabet.forEach((char, index) => {
-    hindiCharOrder[char] = index;
-});
-
-// Function to get Hindi character order index
-function getHindiCharOrder(char) {
-    // Check for compound characters first (क्ष, ज्ञ)
-    if (char.length > 1) {
-        if (hindiCharOrder.hasOwnProperty(char)) {
-            return hindiCharOrder[char];
-        }
-    }
-    // Check single character
-    if (hindiCharOrder.hasOwnProperty(char)) {
-        return hindiCharOrder[char];
-    }
-    // If character not found, return a high number to push it to the end
-    return 9999;
-}
-
-// Function to check if a character is a Hindi character
-function isHindiChar(char) {
-    if (!char || char.length === 0) return false;
-    // First check if it's in our alphabet (most reliable)
-    if (hindiCharOrder.hasOwnProperty(char)) return true;
-    // Also check if character is in Devanagari Unicode range (0900-097F)
-    const code = char.charCodeAt(0);
-    return (code >= 0x0900 && code <= 0x097F);
-}
-
-// Function to get the first Hindi character from a string
-function getFirstHindiChar(str) {
-    if (!str || typeof str !== 'string') return '';
-    
-    const trimmed = str.trim();
-    if (trimmed.length === 0) return '';
-    
-    // Find the first Hindi character (skip spaces, hyphens, etc.)
-    let startIndex = 0;
-    while (startIndex < trimmed.length && !isHindiChar(trimmed[startIndex])) {
-        startIndex++;
-    }
-    
-    if (startIndex >= trimmed.length) return '';
-    
-    // Check for compound characters first (क्ष, ज्ञ) - look at first 2 characters from start
-    if (startIndex + 2 <= trimmed.length) {
-        const twoChar = trimmed.substring(startIndex, startIndex + 2);
-        if (hindiCharOrder.hasOwnProperty(twoChar)) {
-            return twoChar;
-        }
-    }
-    
-    // Return first single Hindi character
-    return trimmed[startIndex];
-}
-
-// Function to find the start index of the first Hindi character
-function findFirstHindiCharIndex(str) {
-    if (!str || typeof str !== 'string') return -1;
-    
-    const trimmed = str.trim();
-    if (trimmed.length === 0) return -1;
-    
-    // Find the first Hindi character (skip spaces, hyphens, etc.)
-    for (let i = 0; i < trimmed.length; i++) {
-        if (isHindiChar(trimmed[i])) {
-            // Check if it's part of a compound character
-            if (i + 1 < trimmed.length) {
-                const twoChar = trimmed.substring(i, i + 2);
-                if (hindiCharOrder.hasOwnProperty(twoChar)) {
-                    return i;
-                }
-            }
-            return i;
-        }
-    }
-    
-    return -1;
-}
-
-// Function to compare two Hindi words
-function compareHindiWords(word1, word2) {
-    if (!word1 || !word2) {
-        if (!word1 && !word2) return 0;
-        if (!word1) return 1;
-        return -1;
-    }
-
-    const str1 = String(word1).trim();
-    const str2 = String(word2).trim();
-
-    if (str1.length === 0 && str2.length === 0) return 0;
-    if (str1.length === 0) return 1;
-    if (str2.length === 0) return -1;
-
-    // Get first Hindi characters
-    const firstChar1 = getFirstHindiChar(str1);
-    const firstChar2 = getFirstHindiChar(str2);
-
-    // If we can't find Hindi characters, compare as strings
-    if (!firstChar1 && !firstChar2) {
-        return str1.localeCompare(str2, 'hi');
-    }
-    if (!firstChar1) return 1;
-    if (!firstChar2) return -1;
-
-    // Compare first characters
-    const order1 = getHindiCharOrder(firstChar1);
-    const order2 = getHindiCharOrder(firstChar2);
-
-    if (order1 !== order2) {
-        return order1 - order2;
-    }
-
-    // If first characters are the same, compare the rest of the string
-    // Find where the first Hindi character starts
-    const index1 = findFirstHindiCharIndex(str1);
-    const index2 = findFirstHindiCharIndex(str2);
-    
-    const skip1 = index1 >= 0 ? index1 + firstChar1.length : str1.length;
-    const skip2 = index2 >= 0 ? index2 + firstChar2.length : str2.length;
-    
-    const remaining1 = str1.substring(skip1).trim();
-    const remaining2 = str2.substring(skip2).trim();
-
-    // If both have remaining characters, compare them
-    if (remaining1.length > 0 && remaining2.length > 0) {
-        return compareHindiWords(remaining1, remaining2);
-    }
-
-    // If one is empty, shorter comes first
-    return remaining1.length - remaining2.length;
-}
-
-// Function to sort contents by Hindi word (hindiWord field only, NOT hinglishWord)
-function sortByHindiWord(contents) {
-    // Create a copy to avoid mutating the original array
-    const contentsCopy = [...contents];
-    return contentsCopy.sort((a, b) => {
-        // IMPORTANT: Sort by hindiWord only, never use hinglishWord for sorting
-        const hindiWord1 = a.hindiWord || '';
-        const hindiWord2 = b.hindiWord || '';
-        const result = compareHindiWords(hindiWord1, hindiWord2);
-        return result;
-    });
-}
+console.log('[Kosh Content API] MongoDB native Hindi sorting with collation enabled');
 
 // Get all Kosh Contents with pagination
 router.get('/', async (req, res) => {
@@ -170,19 +12,18 @@ router.get('/', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get all contents for sorting - use .lean() for plain objects
-        // Select only necessary fields to reduce memory usage
-        const allContents = await KoshContent.find()
+        // Get total count
+        const total = await KoshContent.countDocuments();
+
+        // Get paginated contents with MongoDB native sorting
+        const contents = await KoshContent.find()
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
+            .collation({ locale: 'hi', strength: 1 })
+            .sort({ hindiWord: 1, englishWord: 1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
-
-        // Sort all contents by Hindi word alphabetically
-        const sortedContents = sortByHindiWord(allContents);
-
-        // Apply pagination after sorting
-        const total = sortedContents.length;
-        const contents = sortedContents.slice(skip, skip + limit);
         
         res.json({
             contents,
@@ -212,18 +53,18 @@ router.get('/search', async (req, res) => {
             ]
         };
 
-        // Select only necessary fields to reduce memory usage
-        const allContents = await KoshContent.find(searchQuery)
+        // Get total count
+        const total = await KoshContent.countDocuments(searchQuery);
+
+        // Get paginated contents with MongoDB native sorting
+        const contents = await KoshContent.find(searchQuery)
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
+            .collation({ locale: 'hi', strength: 1 })
+            .sort({ hindiWord: 1, englishWord: 1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
-
-        // Sort by Hindi word
-        const sortedContents = sortByHindiWord(allContents);
-
-        // Apply pagination after sorting
-        const total = sortedContents.length;
-        const contents = sortedContents.slice(skip, skip + limit);
 
         res.json({
             contents,
@@ -243,23 +84,32 @@ router.get('/category/:categoryId', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Note: KoshContent doesn't have a direct category field, it has subCategory
-        // This route might need to be adjusted based on your data structure
-        // For now, we'll skip this or implement it if needed
+        // Get subcategories for this category
         const KoshSubCategory = require('../../models/KoshSubCategory');
         const subcategories = await KoshSubCategory.find({ parentCategory: req.params.categoryId });
         const subcategoryIds = subcategories.map(sub => sub._id);
 
-        // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
-        // Select only necessary fields to reduce memory usage
-        const allContents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
+        // Get total count
+        const total = await KoshContent.countDocuments({ subCategory: { $in: subcategoryIds } });
+
+        // Get paginated contents with MongoDB native sorting
+        const contents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
+            .collation({ locale: 'hi', strength: 1 })
+            .sort({ hindiWord: 1, englishWord: 1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
 
-        // Process search terms (optimized - no excessive logging)
+        // Get all search fields for vishesh_suchi (only search field, not full content)
+        const allSearchFields = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
+            .select('search')
+            .lean();
+
+        // Process search terms efficiently
         const searchTermsSet = new Set();
-        allContents.forEach((content) => {
+        allSearchFields.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())
@@ -270,13 +120,6 @@ router.get('/category/:categoryId', async (req, res) => {
 
         // Convert Set to sorted array
         const vishesh_suchi = Array.from(searchTermsSet).sort();
-
-        // Sort all contents by Hindi word alphabetically
-        const sortedContents = sortByHindiWord(allContents);
-
-        // Apply pagination after sorting
-        const total = sortedContents.length;
-        const contents = sortedContents.slice(skip, skip + limit);
 
         res.json({
             vishesh_suchi: vishesh_suchi,
@@ -297,16 +140,27 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
-        // Select only necessary fields to reduce memory usage
-        const allContents = await KoshContent.find({ subCategory: req.params.subcategoryId })
+        // Get total count
+        const total = await KoshContent.countDocuments({ subCategory: req.params.subcategoryId });
+
+        // Get paginated contents with MongoDB native sorting (much more efficient!)
+        const contents = await KoshContent.find({ subCategory: req.params.subcategoryId })
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
+            .collation({ locale: 'hi', strength: 1 })  // Hindi collation for proper sorting
+            .sort({ hindiWord: 1, englishWord: 1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
 
-        // Process search terms (optimized - no excessive logging)
+        // Get all contents ONLY for vishesh_suchi (just search field, not full content)
+        const allSearchFields = await KoshContent.find({ subCategory: req.params.subcategoryId })
+            .select('search')
+            .lean();
+
+        // Process search terms efficiently
         const searchTermsSet = new Set();
-        allContents.forEach((content) => {
+        allSearchFields.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())
@@ -318,14 +172,7 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         // Convert Set to sorted array
         const vishesh_suchi = Array.from(searchTermsSet).sort();
 
-        // Sort all contents by Hindi word alphabetically
-        const sortedContents = sortByHindiWord(allContents);
-
-        // Apply pagination after sorting
-        const total = sortedContents.length;
-        const contents = sortedContents.slice(skip, skip + limit);
-
-        // Always include vishesh_suchi in response, even if empty
+        // Build response
         const response = {
             vishesh_suchi: vishesh_suchi,
             contents: contents,

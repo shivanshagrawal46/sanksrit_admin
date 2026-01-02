@@ -148,11 +148,12 @@ function compareHindiWords(word1, word2) {
     return remaining1.length - remaining2.length;
 }
 
-// Function to sort contents by Hindi word
+// Function to sort contents by Hindi word (hindiWord field only, NOT hinglishWord)
 function sortByHindiWord(contents) {
     // Create a copy to avoid mutating the original array
     const contentsCopy = [...contents];
     return contentsCopy.sort((a, b) => {
+        // IMPORTANT: Sort by hindiWord only, never use hinglishWord for sorting
         const hindiWord1 = a.hindiWord || '';
         const hindiWord2 = b.hindiWord || '';
         const result = compareHindiWords(hindiWord1, hindiWord2);
@@ -167,9 +168,10 @@ router.get('/', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get all contents for sorting
+        // Get all contents for sorting - use .lean() for plain objects
         const allContents = await KoshContent.find()
-            .populate('subCategory', 'name');
+            .populate('subCategory', 'name')
+            .lean();
 
         // Sort all contents by Hindi word alphabetically
         const sortedContents = sortByHindiWord(allContents);
@@ -207,7 +209,8 @@ router.get('/search', async (req, res) => {
         };
 
         const allContents = await KoshContent.find(searchQuery)
-            .populate('subCategory', 'name');
+            .populate('subCategory', 'name')
+            .lean();
 
         // Sort by Hindi word
         const sortedContents = sortByHindiWord(allContents);
@@ -241,9 +244,10 @@ router.get('/category/:categoryId', async (req, res) => {
         const subcategories = await KoshSubCategory.find({ parentCategory: req.params.categoryId });
         const subcategoryIds = subcategories.map(sub => sub._id);
 
-        // Get all contents for vishesh_suchi and sorting
+        // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
         const allContents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
-            .populate('subCategory', 'name');
+            .populate('subCategory', 'name')
+            .lean();
         console.log('Category API - Found total contents:', allContents.length);
 
         // Process search terms
@@ -287,9 +291,10 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get all contents for vishesh_suchi and sorting
+        // Get all contents for vishesh_suchi and sorting - use .lean() for plain objects
         const allContents = await KoshContent.find({ subCategory: req.params.subcategoryId })
-            .populate('subCategory', 'name');
+            .populate('subCategory', 'name')
+            .lean();
         console.log('1. Found total contents for subcategory:', allContents.length);
 
         // Process search terms

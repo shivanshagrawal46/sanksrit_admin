@@ -3,6 +3,10 @@ const router = express.Router();
 const KoshContent = require('../../models/KoshContent');
 const auth = require('../../middleware/auth');
 
+console.log('========================================');
+console.log('KOSH CONTENT API LOADED - VERSION WITH HINDI SORTING - 2025-01-02');
+console.log('========================================');
+
 // Hindi alphabet order for sorting
 const hindiAlphabet = [
     'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ', 'अं', 'अः',
@@ -314,8 +318,20 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         const vishesh_suchi = Array.from(searchTermsSet).sort();
         console.log('2. Extracted vishesh_suchi:', vishesh_suchi);
 
+        // DEBUG: Check data before sorting
+        console.log('3. BEFORE SORTING - First 5 items:');
+        allContents.slice(0, 5).forEach((item, idx) => {
+            console.log(`   ${idx + 1}. hindiWord: "${item.hindiWord}", sequenceNo: ${item.sequenceNo}, id: ${item.id}`);
+        });
+
         // Sort all contents by Hindi word alphabetically
         const sortedContents = sortByHindiWord(allContents);
+
+        // DEBUG: Check data after sorting
+        console.log('4. AFTER SORTING - First 5 items:');
+        sortedContents.slice(0, 5).forEach((item, idx) => {
+            console.log(`   ${idx + 1}. hindiWord: "${item.hindiWord}", sequenceNo: ${item.sequenceNo}, id: ${item.id}`);
+        });
 
         // Apply pagination after sorting
         const total = sortedContents.length;

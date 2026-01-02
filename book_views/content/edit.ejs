@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Content | Sanskrit Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(103, 111, 157, 0.25);
+        }
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: var(--accent);
+        }
+        .ck-editor__editable {
+            min-height: 300px;
+            max-height: 500px;
+        }
+        .current-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .current-image {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <%- include('../../partials/sidebar', { 
+            activePage: 'book',
+            activeCategory: null,
+            koshCategories: [],
+            mcqCategories: []
+        }) %>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h1 class="page-title">Edit Content</h1>
+            <a href="/book/content" class="btn btn-outline-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Content
+            </a>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="form-card">
+            <form action="/book/content/edit/<%= content._id %>" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-control" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <% categories.forEach(function(cat) { %>
+                                <option value="<%= cat._id %>" <%= content.category.toString() === cat._id.toString() ? 'selected' : '' %>>
+                                    <%= cat.name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="book" class="form-label">Book</label>
+                        <select class="form-control" id="book" name="book" required>
+                            <option value="">Select Book</option>
+                            <% books.forEach(function(bk) { %>
+                                <option value="<%= bk._id %>" <%= content.book.toString() === bk._id.toString() ? 'selected' : '' %>>
+                                    <%= bk.name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="chapter" class="form-label">Chapter</label>
+                        <select class="form-control" id="chapter" name="chapter" required>
+                            <option value="">Select Chapter</option>
+                            <% chapters.forEach(function(ch) { %>
+                                <option value="<%= ch._id %>" <%= content.chapter.toString() === ch._id.toString() ? 'selected' : '' %>>
+                                    <%= ch.name %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label for="title_hn" class="form-label">Title (Hindi) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_hn" name="title_hn" value="<%= content.title_hn %>">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="title_en" class="form-label">Title (English) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_en" name="title_en" value="<%= content.title_en %>">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="title_hinglish" class="form-label">Title (Hinglish) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_hinglish" name="title_hinglish" value="<%= content.title_hinglish %>">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="meaning" class="form-label">Meaning <span class="text-muted">(Optional)</span></label>
+                    <textarea class="form-control" id="meaning" name="meaning"><%= content.meaning %></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="details" class="form-label">Details <span class="text-muted">(Optional)</span></label>
+                    <textarea class="form-control" id="details" name="details"><%= content.details %></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="extra" class="form-label">Extra</label>
+                    <textarea class="form-control" id="extra" name="extra"><%= content.extra %></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="images" class="form-label">Images</label>
+                    <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
+                    <% if (content.images && content.images.length > 0) { %>
+                        <div class="current-images">
+                            <% content.images.forEach(function(image) { %>
+                                <img src="<%= image %>" alt="Content image" class="current-image">
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="mb-4">
+                    <label for="video_links" class="form-label">Video Links (one per line)</label>
+                    <textarea class="form-control" id="video_links" name="video_links" rows="3"><%= content.video_links ? content.video_links.join('\n') : '' %></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="me-2">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize CKEditor for all textareas
+        CKEDITOR.replace('meaning', {
+            height: 300,
+            removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Strike,Subscript,Superscript,CopyFormatting,RemoveFormat,NumberedList,BulletedList,Outdent,Indent,Blockquote,CreateDiv,JustifyLeft,JustifyCenter,JustifyRight,JustifyBlock,BidiLtr,BidiRtl,Language,Link,Unlink,Anchor,Image,Flash,Table,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,Styles,Format,Font,FontSize,TextColor,BGColor,Maximize,ShowBlocks,About'
+        });
+        
+        CKEDITOR.replace('details', {
+            height: 300,
+            removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Strike,Subscript,Superscript,CopyFormatting,RemoveFormat,NumberedList,BulletedList,Outdent,Indent,Blockquote,CreateDiv,JustifyLeft,JustifyCenter,JustifyRight,JustifyBlock,BidiLtr,BidiRtl,Language,Link,Unlink,Anchor,Image,Flash,Table,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,Styles,Format,Font,FontSize,TextColor,BGColor,Maximize,ShowBlocks,About'
+        });
+        
+        CKEDITOR.replace('extra', {
+            height: 300,
+            removeButtons: 'Save,NewPage,Preview,Print,Templates,Cut,Copy,Paste,PasteText,PasteFromWord,Find,Replace,SelectAll,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Strike,Subscript,Superscript,CopyFormatting,RemoveFormat,NumberedList,BulletedList,Outdent,Indent,Blockquote,CreateDiv,JustifyLeft,JustifyCenter,JustifyRight,JustifyBlock,BidiLtr,BidiRtl,Language,Link,Unlink,Anchor,Image,Flash,Table,HorizontalRule,Smiley,SpecialChar,PageBreak,Iframe,Styles,Format,Font,FontSize,TextColor,BGColor,Maximize,ShowBlocks,About'
+        });
+
+        // Update chapters when book is selected
+        document.getElementById('book').addEventListener('change', function() {
+            const bookId = this.value;
+            const chapterSelect = document.getElementById('chapter');
+            chapterSelect.innerHTML = '<option value="">Select Chapter</option>';
+            
+            if (bookId) {
+                const chapters = Array.from(document.querySelectorAll('#chapter option')).filter(opt => 
+                    opt.value && opt.dataset.book === bookId
+                );
+                chapters.forEach(chapter => {
+                    chapterSelect.appendChild(chapter.cloneNode(true));
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

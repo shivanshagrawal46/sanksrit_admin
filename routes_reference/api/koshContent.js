@@ -169,7 +169,8 @@ router.get('/', async (req, res) => {
 
         // Get all contents for sorting
         const allContents = await KoshContent.find()
-            .populate('subCategory', 'name');
+            .populate('category', 'name')
+            .populate('subcategory', 'name');
 
         // Sort all contents by Hindi word alphabetically
         const sortedContents = sortByHindiWord(allContents);
@@ -199,22 +200,20 @@ router.get('/search', async (req, res) => {
 
         const searchQuery = {
             $or: [
-                { hindiWord: { $regex: query, $options: 'i' } },
-                { englishWord: { $regex: query, $options: 'i' } },
-                { hinglishWord: { $regex: query, $options: 'i' } },
-                { meaning: { $regex: query, $options: 'i' } }
+                { title: { $regex: query, $options: 'i' } },
+                { content: { $regex: query, $options: 'i' } },
+                { keywords: { $regex: query, $options: 'i' } }
             ]
         };
 
-        const allContents = await KoshContent.find(searchQuery)
-            .populate('subCategory', 'name');
+        const contents = await KoshContent.find(searchQuery)
+            .populate('category', 'name')
+            .populate('subcategory', 'name')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        // Sort by Hindi word
-        const sortedContents = sortByHindiWord(allContents);
-
-        // Apply pagination after sorting
-        const total = sortedContents.length;
-        const contents = sortedContents.slice(skip, skip + limit);
+        const total = await KoshContent.countDocuments(searchQuery);
 
         res.json({
             contents,
@@ -234,16 +233,10 @@ router.get('/category/:categoryId', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Note: KoshContent doesn't have a direct category field, it has subCategory
-        // This route might need to be adjusted based on your data structure
-        // For now, we'll skip this or implement it if needed
-        const KoshSubCategory = require('../../models/KoshSubCategory');
-        const subcategories = await KoshSubCategory.find({ parentCategory: req.params.categoryId });
-        const subcategoryIds = subcategories.map(sub => sub._id);
-
         // Get all contents for vishesh_suchi and sorting
-        const allContents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
-            .populate('subCategory', 'name');
+        const allContents = await KoshContent.find({ category: req.params.categoryId })
+            .populate('category', 'name')
+            .populate('subcategory', 'name');
         console.log('Category API - Found total contents:', allContents.length);
 
         // Process search terms
@@ -337,7 +330,8 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const content = await KoshContent.findById(req.params.id)
-            .populate('subCategory', 'name');
+            .populate('category', 'name')
+            .populate('subcategory', 'name');
         if (!content) {
             return res.status(404).json({ message: 'Content not found' });
         }
@@ -351,17 +345,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', auth, async (req, res) => {
     try {
         const content = new KoshContent({
-            subCategory: req.body.subCategory,
-            sequenceNo: req.body.sequenceNo,
-            hindiWord: req.body.hindiWord,
-            englishWord: req.body.englishWord,
-            hinglishWord: req.body.hinglishWord,
-            meaning: req.body.meaning,
-            extra: req.body.extra,
-            structure: req.body.structure,
-            search: req.body.search,
-            youtubeLink: req.body.youtubeLink,
-            image: req.body.image
+            title: req.body.title,
+            content: req.body.content,
+            category: req.body.category,
+            subcategory: req.body.subcategory,
+            keywords: req.body.keywords ? req.body.keywords.split(',').map(k => k.trim()) : [],
+            image: req.body.image,
+            isActive: req.body.isActive
         });
         const newContent = await content.save();
         res.status(201).json(newContent);
@@ -378,17 +368,15 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(404).json({ message: 'Content not found' });
         }
 
-        if (req.body.subCategory !== undefined) content.subCategory = req.body.subCategory;
-        if (req.body.sequenceNo !== undefined) content.sequenceNo = req.body.sequenceNo;
-        if (req.body.hindiWord !== undefined) content.hindiWord = req.body.hindiWord;
-        if (req.body.englishWord !== undefined) content.englishWord = req.body.englishWord;
-        if (req.body.hinglishWord !== undefined) content.hinglishWord = req.body.hinglishWord;
-        if (req.body.meaning !== undefined) content.meaning = req.body.meaning;
-        if (req.body.extra !== undefined) content.extra = req.body.extra;
-        if (req.body.structure !== undefined) content.structure = req.body.structure;
-        if (req.body.search !== undefined) content.search = req.body.search;
-        if (req.body.youtubeLink !== undefined) content.youtubeLink = req.body.youtubeLink;
-        if (req.body.image !== undefined) content.image = req.body.image;
+        content.title = req.body.title;
+        content.content = req.body.content;
+        content.category = req.body.category;
+        content.subcategory = req.body.subcategory;
+        content.keywords = req.body.keywords ? req.body.keywords.split(',').map(k => k.trim()) : [];
+        content.isActive = req.body.isActive;
+        if (req.body.image) {
+            content.image = req.body.image;
+        }
 
         const updatedContent = await content.save();
         res.json(updatedContent);
@@ -404,11 +392,11 @@ router.delete('/:id', auth, async (req, res) => {
         if (!content) {
             return res.status(404).json({ message: 'Content not found' });
         }
-        await KoshContent.findByIdAndDelete(req.params.id);
+        await content.remove();
         res.json({ message: 'Content deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-module.exports = router;
+module.exports = router; 

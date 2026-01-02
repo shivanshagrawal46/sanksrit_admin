@@ -27,6 +27,10 @@ const aboutUsRouter = require('./routes/aboutUs');
 const aboutTeamApiRouter = require('./routes/api/aboutTeam');
 const aboutUsApiRouter = require('./routes/api/aboutUs');
 const mediaRouter = require('./routes/media');
+const bookRouter = require('./routes/book');
+const bookApiRouter = require('./routes/api/book');
+const divineQuoteRouter = require('./routes/divineQuote');
+const divineQuoteApiRouter = require('./routes/api/divineQuote');
 
 const app = express();
 
@@ -142,10 +146,14 @@ app.use('/mcq-master', require('./routes/mcqMaster'));
 app.use('/mcq-content', mcqContentRouter);
 app.use('/about-team', aboutTeamRouter);
 app.use('/about-us', aboutUsRouter);
+app.use('/book', bookRouter);
+app.use('/divine-quotes', divineQuoteRouter);
 
 // Register routes
 app.use('/api/aboutTeam', aboutTeamApiRouter);
 app.use('/api/aboutUs', aboutUsApiRouter);
+app.use('/api/book', bookApiRouter);
+app.use('/api/divine-quotes', divineQuoteApiRouter);
 app.use('/media', mediaRouter);
 
 // API Routes
@@ -153,6 +161,7 @@ app.use('/api/kosh-category', koshCategoryApi);
 app.use('/api/kosh-subcategory', koshSubCategoryApi);
 app.use('/api/kosh-content', koshContentApi);
 app.use('/api/mcq', mcqApiRouter);
+app.use('/api/mcq-content', require('./routes/api/mcqContent'));
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {

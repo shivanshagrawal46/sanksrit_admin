@@ -19,4 +19,11 @@ const koshContentSchema = new mongoose.Schema({
 
 koshContentSchema.plugin(AutoIncrement, { inc_field: 'id', id: 'content_id_counter' });
 
+// Add indexes for fast queries
+koshContentSchema.index({ subCategory: 1, hindiWord: 1 });
+koshContentSchema.index({ subCategory: 1, sequenceNo: 1 });
+koshContentSchema.index({ hindiWord: 1 });
+koshContentSchema.index({ englishWord: 1 });
+koshContentSchema.index({ search: 1 });
+
 module.exports = mongoose.model('KoshContent', koshContentSchema); 

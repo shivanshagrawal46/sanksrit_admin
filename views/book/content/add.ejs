@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Content | Sanskrit Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(103, 111, 157, 0.25);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .btn-outline-secondary {
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+        .ck-editor__editable {
+            min-height: 200px;
+        }
+        .image-preview {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        .image-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        /* Add styles for CKEditor */
+        .cke_chrome {
+            border-radius: 8px !important;
+            border-color: #e2e8f0 !important;
+        }
+        .cke_top {
+            border-bottom: 1px solid #e2e8f0 !important;
+            background: #f8f9fa !important;
+            border-radius: 8px 8px 0 0 !important;
+        }
+        .cke_bottom {
+            border-top: 1px solid #e2e8f0 !important;
+            background: #f8f9fa !important;
+            border-radius: 0 0 8px 8px !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <%- include('../../partials/sidebar', { 
+            activePage: 'book',
+            activeCategory: null,
+            koshCategories: [],
+            mcqCategories: []
+        }) %>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h1 class="page-title">Add New Content</h1>
+        </div>
+
+        <!-- Add Content Form -->
+        <div class="form-card">
+            <form action="/book/content/add" method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select a category</option>
+                            <% categories.forEach(function(category) { %>
+                                <option value="<%= category._id %>"><%= category.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="book" class="form-label">Book</label>
+                        <select class="form-select" id="book" name="book" required>
+                            <option value="">Select a book</option>
+                            <% books.forEach(function(book) { %>
+                                <option value="<%= book._id %>" data-category="<%= book.category._id %>"><%= book.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="chapter" class="form-label">Chapter</label>
+                        <select class="form-select" id="chapter" name="chapter" required>
+                            <option value="">Select a chapter</option>
+                            <% chapters.forEach(function(chapter) { %>
+                                <option value="<%= chapter._id %>" data-book="<%= chapter.book._id %>"><%= chapter.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label for="title_hn" class="form-label">Title (Hindi) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_hn" name="title_hn">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="title_en" class="form-label">Title (English) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_en" name="title_en">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label for="title_hinglish" class="form-label">Title (Hinglish) <span class="text-muted">(Optional)</span></label>
+                        <input type="text" class="form-control" id="title_hinglish" name="title_hinglish">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="meaning" class="form-label">Meaning <span class="text-muted">(Optional)</span></label>
+                    <textarea class="form-control" id="meaning" name="meaning"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="details" class="form-label">Details <span class="text-muted">(Optional)</span></label>
+                    <textarea class="form-control" id="details" name="details"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="extra" class="form-label">Extra</label>
+                    <textarea class="form-control" id="extra" name="extra"></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="images" class="form-label">Images</label>
+                    <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple>
+                    <div class="image-preview" id="imagePreview"></div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="video_links" class="form-label">Video Links (one per line)</label>
+                    <textarea class="form-control" id="video_links" name="video_links" rows="3" placeholder="Enter video links, one per line"></textarea>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <a href="/book/content" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Content</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize CKEditor 4 with full configuration
+        CKEDITOR.replace('meaning', {
+            height: 300,
+            removePlugins: 'elementspath,resize'
+        });
+
+        CKEDITOR.replace('details', {
+            height: 300,
+            removePlugins: 'elementspath,resize'
+        });
+
+        CKEDITOR.replace('extra', {
+            height: 300,
+            removePlugins: 'elementspath,resize'
+        });
+
+        // Filter books based on selected category
+        document.getElementById('category').addEventListener('change', function() {
+            const categoryId = this.value;
+            const bookSelect = document.getElementById('book');
+            const options = bookSelect.getElementsByTagName('option');
+
+            console.log('Selected category ID:', categoryId);
+
+            for (let option of options) {
+                if (option.value === '') continue;
+                
+                const bookCategoryId = option.dataset.category;
+                console.log('Book category ID:', bookCategoryId);
+                
+                if (categoryId === '' || bookCategoryId === categoryId) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            }
+
+            // Reset book selection
+            bookSelect.value = '';
+            // Reset chapter selection
+            document.getElementById('chapter').value = '';
+        });
+
+        // Filter chapters based on selected book
+        document.getElementById('book').addEventListener('change', function() {
+            const bookId = this.value;
+            const chapterSelect = document.getElementById('chapter');
+            const options = chapterSelect.getElementsByTagName('option');
+
+            console.log('Selected book ID:', bookId);
+
+            for (let option of options) {
+                if (option.value === '') continue;
+                
+                const chapterBookId = option.dataset.book;
+                console.log('Chapter book ID:', chapterBookId);
+                
+                if (bookId === '' || chapterBookId === bookId) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            }
+
+            // Reset chapter selection
+            chapterSelect.value = '';
+        });
+
+        // Image preview
+        document.getElementById('images').addEventListener('change', function() {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+
+            for (let file of this.files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html> 

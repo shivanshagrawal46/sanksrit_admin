@@ -23,6 +23,163 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Hindi alphabet order for sorting
+const hindiAlphabet = [
+    'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ', 'अं', 'अः',
+    'क', 'ख', 'ग', 'घ', 'च', 'छ', 'ज', 'झ', 'ट', 'ठ', 'ड', 'ढ', 'न',
+    'प', 'फ', 'ब', 'भ', 'म', 'य', 'र', 'ल', 'व', 'श', 'ष', 'स', 'ह',
+    'क्ष', 'ज्ञ', 'ल'
+];
+
+// Create a map for quick lookup
+const hindiCharOrder = {};
+hindiAlphabet.forEach((char, index) => {
+    hindiCharOrder[char] = index;
+});
+
+// Function to get Hindi character order index
+function getHindiCharOrder(char) {
+    // Check for compound characters first (क्ष, ज्ञ)
+    if (char.length > 1) {
+        if (hindiCharOrder.hasOwnProperty(char)) {
+            return hindiCharOrder[char];
+        }
+    }
+    // Check single character
+    if (hindiCharOrder.hasOwnProperty(char)) {
+        return hindiCharOrder[char];
+    }
+    // If character not found, return a high number to push it to the end
+    return 9999;
+}
+
+// Function to check if a character is a Hindi character
+function isHindiChar(char) {
+    if (!char || char.length === 0) return false;
+    // First check if it's in our alphabet (most reliable)
+    if (hindiCharOrder.hasOwnProperty(char)) return true;
+    // Also check if character is in Devanagari Unicode range (0900-097F)
+    const code = char.charCodeAt(0);
+    return (code >= 0x0900 && code <= 0x097F);
+}
+
+// Function to get the first Hindi character from a string
+function getFirstHindiChar(str) {
+    if (!str || typeof str !== 'string') return '';
+    
+    const trimmed = str.trim();
+    if (trimmed.length === 0) return '';
+    
+    // Find the first Hindi character (skip spaces, hyphens, etc.)
+    let startIndex = 0;
+    while (startIndex < trimmed.length && !isHindiChar(trimmed[startIndex])) {
+        startIndex++;
+    }
+    
+    if (startIndex >= trimmed.length) return '';
+    
+    // Check for compound characters first (क्ष, ज्ञ) - look at first 2 characters from start
+    if (startIndex + 2 <= trimmed.length) {
+        const twoChar = trimmed.substring(startIndex, startIndex + 2);
+        if (hindiCharOrder.hasOwnProperty(twoChar)) {
+            return twoChar;
+        }
+    }
+    
+    // Return first single Hindi character
+    return trimmed[startIndex];
+}
+
+// Function to find the start index of the first Hindi character
+function findFirstHindiCharIndex(str) {
+    if (!str || typeof str !== 'string') return -1;
+    
+    const trimmed = str.trim();
+    if (trimmed.length === 0) return -1;
+    
+    // Find the first Hindi character (skip spaces, hyphens, etc.)
+    for (let i = 0; i < trimmed.length; i++) {
+        if (isHindiChar(trimmed[i])) {
+            // Check if it's part of a compound character
+            if (i + 1 < trimmed.length) {
+                const twoChar = trimmed.substring(i, i + 2);
+                if (hindiCharOrder.hasOwnProperty(twoChar)) {
+                    return i;
+                }
+            }
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+// Function to compare two Hindi words
+function compareHindiWords(word1, word2) {
+    if (!word1 || !word2) {
+        if (!word1 && !word2) return 0;
+        if (!word1) return 1;
+        return -1;
+    }
+
+    const str1 = String(word1).trim();
+    const str2 = String(word2).trim();
+
+    if (str1.length === 0 && str2.length === 0) return 0;
+    if (str1.length === 0) return 1;
+    if (str2.length === 0) return -1;
+
+    // Get first Hindi characters
+    const firstChar1 = getFirstHindiChar(str1);
+    const firstChar2 = getFirstHindiChar(str2);
+
+    // If we can't find Hindi characters, compare as strings
+    if (!firstChar1 && !firstChar2) {
+        return str1.localeCompare(str2, 'hi');
+    }
+    if (!firstChar1) return 1;
+    if (!firstChar2) return -1;
+
+    // Compare first characters
+    const order1 = getHindiCharOrder(firstChar1);
+    const order2 = getHindiCharOrder(firstChar2);
+
+    if (order1 !== order2) {
+        return order1 - order2;
+    }
+
+    // If first characters are the same, compare the rest of the string
+    // Find where the first Hindi character starts
+    const index1 = findFirstHindiCharIndex(str1);
+    const index2 = findFirstHindiCharIndex(str2);
+    
+    const skip1 = index1 >= 0 ? index1 + firstChar1.length : str1.length;
+    const skip2 = index2 >= 0 ? index2 + firstChar2.length : str2.length;
+    
+    const remaining1 = str1.substring(skip1).trim();
+    const remaining2 = str2.substring(skip2).trim();
+
+    // If both have remaining characters, compare them
+    if (remaining1.length > 0 && remaining2.length > 0) {
+        return compareHindiWords(remaining1, remaining2);
+    }
+
+    // If one is empty, shorter comes first
+    return remaining1.length - remaining2.length;
+}
+
+// Function to sort contents by Hindi word
+function sortByHindiWord(contents) {
+    // Create a copy to avoid mutating the original array
+    const contentsCopy = [...contents];
+    return contentsCopy.sort((a, b) => {
+        const hindiWord1 = a.hindiWord || '';
+        const hindiWord2 = b.hindiWord || '';
+        const result = compareHindiWords(hindiWord1, hindiWord2);
+        return result;
+    });
+}
+
 // Function to generate HTML table for Sanskrit grammar fields
 function generateTable(fieldLabel, wordsString) {
     const rowHeaders = ['प्रथमपुरुषः', 'मध्यमपुरुषः', 'उत्तमपुरुषः'];
@@ -51,13 +208,19 @@ router.get('/kosh-subcategory/:subId/contents', requireAuth, async (req, res) =>
   const subcategory = await KoshSubCategory.findById(req.params.subId);
   const requestedPage = parseInt(req.query.page) || 1;
   const limit = 10;
-  const total = await KoshContent.countDocuments({ subCategory: req.params.subId });
+  
+  // Get all contents for sorting
+  const allContents = await KoshContent.find({ subCategory: req.params.subId });
+  
+  // Sort all contents by Hindi word alphabetically
+  const sortedContents = sortByHindiWord(allContents);
+  
+  // Apply pagination after sorting
+  const total = sortedContents.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const page = Math.min(Math.max(requestedPage, 1), totalPages);
-  const contents = await KoshContent.find({ subCategory: req.params.subId })
-    .sort({ sequenceNo: 1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
+  const contents = sortedContents.slice((page - 1) * limit, page * limit);
+  
   const KoshCategory = require('../models/KoshCategory');
   const koshCategories = await KoshCategory.find().sort({ position: 1 });
   res.render('koshContents', {
@@ -184,7 +347,10 @@ router.get('/kosh-subcategory/:subId/export-excel', requireAuth, async (req, res
     }
 
     const KoshContent = require('../models/KoshContent');
-    const contents = await KoshContent.find({ subCategory: req.params.subId }).sort({ sequenceNo: 1 });
+    const allContents = await KoshContent.find({ subCategory: req.params.subId });
+    
+    // Sort all contents by Hindi word alphabetically
+    const contents = sortByHindiWord(allContents);
 
     const dataToExport = contents.map(entry => ({
       sequenceNo: entry.sequenceNo,

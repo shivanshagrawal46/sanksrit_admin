@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const util = require('util');
 util.isArray = Array.isArray;
-const authApiRoutes = require('./routes/auth'); // Authentication API routes
+const adminAuthRoutes = require('./routes/adminAuth'); // Admin session-based auth
+const authApiRoutes = require('./routes/auth'); // User API auth (JWT) for Flutter
 const koshCategoryRoutes = require('./routes/koshCategory');
 const koshSubCategoryRoutes = require('./routes/koshSubCategory');
 const koshContentRoutes = require('./routes/koshContent');
@@ -131,6 +132,9 @@ app.get('/dashboard', requireAuth, (req, res) => {
   res.render('dashboard', { username: req.session.username });
 });
 
+// Admin authentication routes (session-based for web dashboard)
+app.use('/', adminAuthRoutes);
+
 app.use('/', koshCategoryRoutes);
 app.use('/', koshSubCategoryRoutes);
 app.use('/', koshContentRoutes);
@@ -168,7 +172,14 @@ app.use('/api/kosh-content', koshContentApi);
 app.use('/api/mcq', mcqApiRouter);
 app.use('/api/mcq-content', require('./routes/api/mcqContent'));
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Please change PORT in .env file.`);
+  } else {
+    console.error('Server error:', err);
+  }
+  process.exit(1);
 }); 

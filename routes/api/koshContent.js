@@ -3,27 +3,152 @@ const router = express.Router();
 const KoshContent = require('../../models/KoshContent');
 const auth = require('../../middleware/auth');
 
-console.log('[Kosh Content API] MongoDB native Hindi sorting with collation enabled');
+console.log('[Kosh Content API] Custom JavaScript Hindi alphabetical sorting enabled');
+
+// Hindi alphabet order for precise sorting
+const hindiAlphabet = [
+    'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ए', 'ऐ', 'ओ', 'औ', 'अं', 'अः',
+    'क', 'ख', 'ग', 'घ', 'च', 'छ', 'ज', 'झ', 'ट', 'ठ', 'ड', 'ढ', 'न',
+    'प', 'फ', 'ब', 'भ', 'म', 'य', 'र', 'ल', 'व', 'श', 'ष', 'स', 'ह',
+    'क्ष', 'ज्ञ', 'ल'
+];
+
+const hindiCharOrder = {};
+hindiAlphabet.forEach((char, index) => {
+    hindiCharOrder[char] = index;
+});
+
+function getHindiCharOrder(char) {
+    if (char.length > 1 && hindiCharOrder.hasOwnProperty(char)) {
+        return hindiCharOrder[char];
+    }
+    if (hindiCharOrder.hasOwnProperty(char)) {
+        return hindiCharOrder[char];
+    }
+    return 9999;
+}
+
+function isHindiChar(char) {
+    if (!char || char.length === 0) return false;
+    if (hindiCharOrder.hasOwnProperty(char)) return true;
+    const code = char.charCodeAt(0);
+    return (code >= 0x0900 && code <= 0x097F);
+}
+
+function getFirstHindiChar(str) {
+    if (!str || typeof str !== 'string') return '';
+    const trimmed = str.trim();
+    if (trimmed.length === 0) return '';
+    
+    let startIndex = 0;
+    while (startIndex < trimmed.length && !isHindiChar(trimmed[startIndex])) {
+        startIndex++;
+    }
+    if (startIndex >= trimmed.length) return '';
+    
+    if (startIndex + 2 <= trimmed.length) {
+        const twoChar = trimmed.substring(startIndex, startIndex + 2);
+        if (hindiCharOrder.hasOwnProperty(twoChar)) {
+            return twoChar;
+        }
+    }
+    return trimmed[startIndex];
+}
+
+function findFirstHindiCharIndex(str) {
+    if (!str || typeof str !== 'string') return -1;
+    const trimmed = str.trim();
+    if (trimmed.length === 0) return -1;
+    
+    for (let i = 0; i < trimmed.length; i++) {
+        if (isHindiChar(trimmed[i])) {
+            if (i + 1 < trimmed.length) {
+                const twoChar = trimmed.substring(i, i + 2);
+                if (hindiCharOrder.hasOwnProperty(twoChar)) {
+                    return i;
+                }
+            }
+            return i;
+        }
+    }
+    return -1;
+}
+
+function compareHindiWords(word1, word2) {
+    if (!word1 || !word2) {
+        if (!word1 && !word2) return 0;
+        if (!word1) return 1;
+        return -1;
+    }
+
+    const str1 = String(word1).trim();
+    const str2 = String(word2).trim();
+
+    if (str1.length === 0 && str2.length === 0) return 0;
+    if (str1.length === 0) return 1;
+    if (str2.length === 0) return -1;
+
+    const firstChar1 = getFirstHindiChar(str1);
+    const firstChar2 = getFirstHindiChar(str2);
+
+    if (!firstChar1 && !firstChar2) {
+        return str1.localeCompare(str2, 'hi');
+    }
+    if (!firstChar1) return 1;
+    if (!firstChar2) return -1;
+
+    const order1 = getHindiCharOrder(firstChar1);
+    const order2 = getHindiCharOrder(firstChar2);
+
+    if (order1 !== order2) {
+        return order1 - order2;
+    }
+
+    const index1 = findFirstHindiCharIndex(str1);
+    const index2 = findFirstHindiCharIndex(str2);
+    
+    const skip1 = index1 >= 0 ? index1 + firstChar1.length : str1.length;
+    const skip2 = index2 >= 0 ? index2 + firstChar2.length : str2.length;
+    
+    const remaining1 = str1.substring(skip1).trim();
+    const remaining2 = str2.substring(skip2).trim();
+
+    if (remaining1.length > 0 && remaining2.length > 0) {
+        return compareHindiWords(remaining1, remaining2);
+    }
+
+    return remaining1.length - remaining2.length;
+}
+
+function sortByHindiWord(contents) {
+    const contentsCopy = [...contents];
+    return contentsCopy.sort((a, b) => {
+        const hindiWord1 = a.hindiWord || '';
+        const hindiWord2 = b.hindiWord || '';
+        return compareHindiWords(hindiWord1, hindiWord2);
+    });
+}
 
 // Get all Kosh Contents with pagination
+// NOTE: This route loads ALL content for proper sorting - use subcategory routes instead for better performance
 router.get('/', async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get total count
-        const total = await KoshContent.countDocuments();
-
-        // Get paginated contents with MongoDB native sorting
-        const contents = await KoshContent.find()
+        // Get ALL contents for proper Hindi alphabetical sorting
+        const allContents = await KoshContent.find()
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
-            .collation({ locale: 'hi', strength: 1 })
-            .sort({ hindiWord: 1, englishWord: 1 })
-            .skip(skip)
-            .limit(limit)
             .lean();
+
+        // Sort using custom Hindi alphabetical order
+        const sortedContents = sortByHindiWord(allContents);
+
+        // Apply pagination AFTER sorting
+        const total = sortedContents.length;
+        const contents = sortedContents.slice(skip, skip + limit);
         
         res.json({
             contents,
@@ -53,18 +178,18 @@ router.get('/search', async (req, res) => {
             ]
         };
 
-        // Get total count
-        const total = await KoshContent.countDocuments(searchQuery);
-
-        // Get paginated contents with MongoDB native sorting
-        const contents = await KoshContent.find(searchQuery)
+        // Get all search results for proper sorting
+        const allContents = await KoshContent.find(searchQuery)
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
-            .collation({ locale: 'hi', strength: 1 })
-            .sort({ hindiWord: 1, englishWord: 1 })
-            .skip(skip)
-            .limit(limit)
             .lean();
+
+        // Sort using custom Hindi alphabetical order
+        const sortedContents = sortByHindiWord(allContents);
+
+        // Apply pagination AFTER sorting
+        const total = sortedContents.length;
+        const contents = sortedContents.slice(skip, skip + limit);
 
         res.json({
             contents,
@@ -89,27 +214,22 @@ router.get('/category/:categoryId', async (req, res) => {
         const subcategories = await KoshSubCategory.find({ parentCategory: req.params.categoryId });
         const subcategoryIds = subcategories.map(sub => sub._id);
 
-        // Get total count
-        const total = await KoshContent.countDocuments({ subCategory: { $in: subcategoryIds } });
-
-        // Get paginated contents with MongoDB native sorting
-        const contents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
+        // Get ALL contents for this category for proper sorting
+        const allContents = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
-            .collation({ locale: 'hi', strength: 1 })
-            .sort({ hindiWord: 1, englishWord: 1 })
-            .skip(skip)
-            .limit(limit)
             .lean();
 
-        // Get all search fields for vishesh_suchi (only search field, not full content)
-        const allSearchFields = await KoshContent.find({ subCategory: { $in: subcategoryIds } })
-            .select('search')
-            .lean();
+        // Sort using custom Hindi alphabetical order
+        const sortedContents = sortByHindiWord(allContents);
 
-        // Process search terms efficiently
+        // Apply pagination AFTER sorting
+        const total = sortedContents.length;
+        const contents = sortedContents.slice(skip, skip + limit);
+
+        // Process search terms for vishesh_suchi
         const searchTermsSet = new Set();
-        allSearchFields.forEach((content) => {
+        allContents.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())
@@ -140,27 +260,23 @@ router.get('/subcategory/:subcategoryId', async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get total count
-        const total = await KoshContent.countDocuments({ subCategory: req.params.subcategoryId });
-
-        // Get paginated contents with MongoDB native sorting (much more efficient!)
-        const contents = await KoshContent.find({ subCategory: req.params.subcategoryId })
+        // Get ALL contents for this subcategory (for proper sorting and vishesh_suchi)
+        // This is manageable as it's per-subcategory, not all 5000+ items
+        const allContents = await KoshContent.find({ subCategory: req.params.subcategoryId })
             .select('sequenceNo hindiWord englishWord hinglishWord meaning extra structure search youtubeLink image createdAt id subCategory')
             .populate('subCategory', 'name')
-            .collation({ locale: 'hi', strength: 1 })  // Hindi collation for proper sorting
-            .sort({ hindiWord: 1, englishWord: 1 })
-            .skip(skip)
-            .limit(limit)
             .lean();
 
-        // Get all contents ONLY for vishesh_suchi (just search field, not full content)
-        const allSearchFields = await KoshContent.find({ subCategory: req.params.subcategoryId })
-            .select('search')
-            .lean();
+        // Sort using custom Hindi alphabetical order
+        const sortedContents = sortByHindiWord(allContents);
 
-        // Process search terms efficiently
+        // Apply pagination AFTER sorting
+        const total = sortedContents.length;
+        const contents = sortedContents.slice(skip, skip + limit);
+
+        // Process search terms for vishesh_suchi
         const searchTermsSet = new Set();
-        allSearchFields.forEach((content) => {
+        allContents.forEach((content) => {
             if (content.search && typeof content.search === 'string' && content.search.trim() !== '') {
                 const terms = content.search.split(',')
                     .map(term => term.trim())

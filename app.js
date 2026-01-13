@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const util = require('util');
 util.isArray = Array.isArray;
-const authRoutes = require('./routes/auth');
+const authApiRoutes = require('./routes/auth'); // Authentication API routes
 const koshCategoryRoutes = require('./routes/koshCategory');
 const koshSubCategoryRoutes = require('./routes/koshSubCategory');
 const koshContentRoutes = require('./routes/koshContent');
@@ -29,6 +29,8 @@ const aboutUsApiRouter = require('./routes/api/aboutUs');
 const mediaRouter = require('./routes/media');
 const bookRouter = require('./routes/book');
 const bookApiRouter = require('./routes/api/book');
+const geetaRouter = require('./routes/geeta');
+const geetaApiRouter = require('./routes/api/geeta');
 const divineQuoteRouter = require('./routes/divineQuote');
 const divineQuoteApiRouter = require('./routes/api/divineQuote');
 
@@ -46,7 +48,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/bootstrap', express.static(path.join(__dirname, 'node_modules/bootstrap/dist')));
 
 // Body parser
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // Parse JSON bodies (for API routes)
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Method Override middleware to enable DELETE and PUT methods
 app.use(methodOverride('_method'));
@@ -128,7 +131,6 @@ app.get('/dashboard', requireAuth, (req, res) => {
   res.render('dashboard', { username: req.session.username });
 });
 
-app.use('/', authRoutes);
 app.use('/', koshCategoryRoutes);
 app.use('/', koshSubCategoryRoutes);
 app.use('/', koshContentRoutes);
@@ -147,16 +149,19 @@ app.use('/mcq-content', mcqContentRouter);
 app.use('/about-team', aboutTeamRouter);
 app.use('/about-us', aboutUsRouter);
 app.use('/book', bookRouter);
+app.use('/geeta', geetaRouter);
 app.use('/divine-quotes', divineQuoteRouter);
 
 // Register routes
 app.use('/api/aboutTeam', aboutTeamApiRouter);
 app.use('/api/aboutUs', aboutUsApiRouter);
 app.use('/api/book', bookApiRouter);
+app.use('/api/geeta', geetaApiRouter);
 app.use('/api/divine-quotes', divineQuoteApiRouter);
 app.use('/media', mediaRouter);
 
 // API Routes
+app.use('/api/auth', authApiRoutes); // Authentication API routes
 app.use('/api/kosh-category', koshCategoryApi);
 app.use('/api/kosh-subcategory', koshSubCategoryApi);
 app.use('/api/kosh-content', koshContentApi);

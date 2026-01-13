@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Geeta | Sanskrit Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(103, 111, 157, 0.25);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .btn-outline-secondary {
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <%- include('../../partials/sidebar', { 
+            activePage: 'geeta',
+            activeCategory: null,
+            koshCategories: [],
+            mcqCategories: []
+        }) %>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb-nav" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #424769; font-size: 0.9rem;">
+            <a href="/geeta" style="color: #2D3250; text-decoration: none;">Geeta Categories</a>
+            <span>/</span>
+            <% if (selectedCategoryId) { %>
+                <% const selectedCat = categories.find(c => c._id.toString() === selectedCategoryId); %>
+                <% if (selectedCat) { %>
+                    <a href="/geeta/category/<%= selectedCategoryId %>" style="color: #2D3250; text-decoration: none;"><%= selectedCat.name %></a>
+                    <span>/</span>
+                <% } %>
+            <% } %>
+            <span>Add Geeta</span>
+        </div>
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <h1 class="page-title">Add New Geeta</h1>
+        </div>
+
+        <!-- Add Geeta Form -->
+        <div class="form-card">
+            <form action="/geeta/name/add" method="POST" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <% categories.forEach(function(category) { %>
+                            <option value="<%= category._id %>" <%= selectedCategoryId && selectedCategoryId === category._id.toString() ? 'selected' : '' %>><%= category.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="name" class="form-label">Geeta Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="book_image" class="form-label">Geeta Image</label>
+                    <input type="file" class="form-control" id="book_image" name="book_image" accept="image/*">
+                </div>
+
+                <div class="d-flex gap-3">
+                    <a href="<%= selectedCategoryId ? '/geeta/category/' + selectedCategoryId : '/geeta' %>" class="btn btn-outline-secondary" id="cancelBtn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Geeta</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update cancel button URL when category changes
+        document.getElementById('category').addEventListener('change', function() {
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (this.value) {
+                cancelBtn.href = '/geeta/category/' + this.value;
+            } else {
+                cancelBtn.href = '/geeta';
+            }
+        });
+    </script>
+</body>
+</html> 

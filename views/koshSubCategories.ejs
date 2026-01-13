@@ -147,6 +147,8 @@
             border-collapse: separate;
             border-spacing: 0 0.5rem;
             margin-top: 1rem;
+            table-layout: fixed;
+            width: 100%;
         }
 
         .table thead th {
@@ -156,6 +158,13 @@
             font-weight: 600;
             border: none;
         }
+
+        .table thead th:nth-child(1) { width: 50px; }  /* # */
+        .table thead th:nth-child(2) { width: 150px; } /* Hindi */
+        .table thead th:nth-child(3) { width: 120px; } /* English */
+        .table thead th:nth-child(4) { width: 120px; } /* Hinglish */
+        .table thead th:nth-child(5) { width: auto; }  /* Meaning - takes remaining space */
+        .table thead th:nth-child(6) { width: 100px; min-width: 100px; } /* Actions - fixed width */
 
         .table tbody tr {
             background: white;
@@ -174,6 +183,8 @@
             padding: 1rem;
             vertical-align: middle;
             border: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .table td:first-child {
@@ -184,40 +195,46 @@
         .table td:last-child {
             border-top-right-radius: 12px;
             border-bottom-right-radius: 12px;
+            white-space: nowrap;
         }
 
         .action-btns {
             display: flex;
             gap: 0.5rem;
+            justify-content: center;
         }
 
         .btn-action {
             width: 36px;
             height: 36px;
-            display: flex;
+            display: inline-flex !important;
             align-items: center;
             justify-content: center;
             border-radius: 8px;
             transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
         }
 
         .btn-edit {
-            background: rgba(103, 111, 157, 0.1);
+            background: rgba(103, 111, 157, 0.15) !important;
             color: var(--accent);
         }
 
         .btn-edit:hover {
-            background: rgba(103, 111, 157, 0.2);
+            background: rgba(103, 111, 157, 0.3) !important;
             color: var(--primary);
+            transform: scale(1.1);
         }
 
         .btn-delete {
-            background: rgba(244, 67, 54, 0.1);
+            background: rgba(244, 67, 54, 0.15) !important;
             color: var(--error);
         }
 
         .btn-delete:hover {
-            background: rgba(244, 67, 54, 0.2);
+            background: rgba(244, 67, 54, 0.3) !important;
+            transform: scale(1.1);
         }
 
         /* Category Navigation */
@@ -491,8 +508,8 @@
                             <p>No content found for this subcategory.</p>
                         </div>
                     <% } else { %>
-                    <div class="table-responsive">
-                        <table class="table">
+                    <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+                        <table class="table" style="min-width: 800px;">
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -512,20 +529,22 @@
                                         <td><%= content.hinglishWord %></td>
                                         <td><%= content.meaning %></td>
                                         <td>
-                                            <a href="/kosh-content/<%= content._id %>/edit" class="btn btn-action btn-edit" title="Edit">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
-                                                </svg>
-                                            </a>
-                                            <form method="POST" action="/kosh-content/<%= content._id %>/delete" style="display:inline;">
-                                                <button type="submit" class="btn btn-action btn-delete" title="Delete" onclick="return confirm('Delete this content?')">
+                                            <div class="action-btns">
+                                                <a href="/kosh-content/<%= content._id %>/edit" class="btn btn-action btn-edit" title="Edit">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
                                                     </svg>
-                                                </button>
-                                </form>
-                            </td>
+                                                </a>
+                                                <form method="POST" action="/kosh-content/<%= content._id %>/delete" style="display:inline;margin:0;">
+                                                    <button type="submit" class="btn btn-action btn-delete" title="Delete" onclick="return confirm('Delete this content?')">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
                         </tr>
                                 <% }); %>
                     </tbody>

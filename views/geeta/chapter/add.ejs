@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Chapter | Sanskrit Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D3250;
+            --secondary: #424769;
+            --accent: #676F9D;
+            --light: #F9F9F9;
+            --dark: #1A1B26;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+        }
+        .topbar {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            margin: 0;
+        }
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+        }
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 0.2rem rgba(103, 111, 157, 0.25);
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-primary:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .btn-outline-secondary {
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            color: var(--dark);
+            border-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <%- include('../../partials/sidebar', { 
+            activePage: 'geeta',
+            activeCategory: null,
+            koshCategories: [],
+            mcqCategories: []
+        }) %>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb-nav" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #424769; font-size: 0.9rem;">
+            <a href="/geeta" style="color: #2D3250; text-decoration: none;">Geeta Categories</a>
+            <span>/</span>
+            <% if (selectedCategoryId) { %>
+                <% const selectedCat = categories.find(c => c._id.toString() === selectedCategoryId); %>
+                <% if (selectedCat) { %>
+                    <a href="/geeta/category/<%= selectedCategoryId %>" style="color: #2D3250; text-decoration: none;"><%= selectedCat.name %></a>
+                    <span>/</span>
+                <% } %>
+            <% } %>
+            <% if (selectedGeetaId) { %>
+                <% const selectedBk = geetas.find(b => b._id.toString() === selectedGeetaId); %>
+                <% if (selectedBk && selectedCategoryId) { %>
+                    <a href="/geeta/category/<%= selectedCategoryId %>/geeta/<%= selectedGeetaId %>" style="color: #2D3250; text-decoration: none;"><%= selectedBk.name %></a>
+                    <span>/</span>
+                <% } %>
+            <% } %>
+            <span>Add Chapter</span>
+        </div>
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <h1 class="page-title">Add New Chapter</h1>
+        </div>
+
+        <!-- Add Chapter Form -->
+        <div class="form-card">
+            <form action="/geeta/chapter/add" method="POST">
+                <div class="mb-4">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <% categories.forEach(function(category) { %>
+                            <option value="<%= category._id %>" <%= selectedCategoryId && selectedCategoryId === category._id.toString() ? 'selected' : '' %>><%= category.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="geeta" class="form-label">Geeta</label>
+                    <select class="form-select" id="geeta" name="geeta" required>
+                        <option value="">Select a book</option>
+                        <% geetas.forEach(function(book) { %>
+                            <option value="<%= book._id %>" data-category="<%= book.category %>" data-name="<%= book.name %>" <%= selectedGeetaId && selectedGeetaId === book._id.toString() ? 'selected' : '' %>><%= book.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label for="name" class="form-label">Chapter Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <a href="<%= selectedCategoryId && selectedGeetaId ? '/geeta/category/' + selectedCategoryId + '/geeta/' + selectedGeetaId : (selectedCategoryId ? '/geeta/category/' + selectedCategoryId : '/geeta') %>" class="btn btn-outline-secondary" id="cancelBtn">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Chapter</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filter geetas based on selected category
+        const categorySelect = document.getElementById('category');
+        const bookSelect = document.getElementById('geeta');
+        const cancelBtn = document.getElementById('cancelBtn');
+        
+        function filterGeeta() {
+            const categoryId = categorySelect.value;
+            const options = bookSelect.getElementsByTagName('option');
+            const selectedGeetaId = '<%= selectedGeetaId || "" %>';
+
+            for (let option of options) {
+                if (option.value === '') continue; // Skip the default option
+                if (categoryId === '' || option.dataset.category === categoryId) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            }
+
+            // Reset book selection only if category changed and book doesn't match
+            if (categoryId && selectedGeetaId) {
+                const selectedOption = Array.from(options).find(opt => opt.value === selectedGeetaId);
+                if (selectedOption && selectedOption.dataset.category !== categoryId) {
+                    bookSelect.value = '';
+                }
+            } else if (!categoryId || !selectedGeetaId) {
+                bookSelect.value = selectedGeetaId || '';
+            }
+            
+            updateCancelButton();
+        }
+        
+        function updateCancelButton() {
+            const categoryId = categorySelect.value;
+            const bookId = bookSelect.value;
+            
+            if (categoryId && bookId) {
+                cancelBtn.href = '/geeta/category/' + categoryId + '/geeta/' + bookId;
+            } else if (categoryId) {
+                cancelBtn.href = '/geeta/category/' + categoryId;
+            } else {
+                cancelBtn.href = '/geeta';
+            }
+        }
+        
+        // Initial filter on page load
+        filterGeeta();
+        
+        categorySelect.addEventListener('change', function() {
+            filterGeeta();
+        });
+        
+        bookSelect.addEventListener('change', function() {
+            updateCancelButton();
+        });
+    </script>
+</body>
+</html> 

@@ -247,7 +247,17 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       'vidhilidh',
       'aashirlidh',
       'ludh',
-      'laradh'
+      'laradh',
+      'lath1',
+      'lith1',
+      'luth1',
+      'laruth1',
+      'loth1',
+      'ladh1',
+      'vidhilidh1',
+      'aashirlidh1',
+      'ludh1',
+      'laradh1'
     ];
 
     // Create sample data rows with examples
@@ -271,7 +281,17 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
         vidhilidh: 'गच्छेत्;गच्छेताम्;गच्छेयुः;गच्छेः;गच्छेतम्;गच्छेत;गच्छेयम्;गच्छेव;गच्छेम',
         aashirlidh: 'गच्छेत्;गच्छेताम्;गच्छेयुः;गच्छेः;गच्छेतम्;गच्छेत;गच्छेयम्;गच्छेव;गच्छेम',
         ludh: 'अगमत्;अगमताम्;अगमन्;अगमः;अगमतम्;अगमत;अगमम्;अगमाव;अगमाम',
-        laradh: 'अगमिष्यत्;अगमिष्यताम्;अगमिष्यन्;अगमिष्यः;अगमिष्यतम्;अगमिष्यत;अगमिष्यम्;अगमिष्याव;अगमिष्याम'
+        laradh: 'अगमिष्यत्;अगमिष्यताम्;अगमिष्यन्;अगमिष्यः;अगमिष्यतम्;अगमिष्यत;अगमिष्यम्;अगमिष्याव;अगमिष्याम',
+        lath1: '',
+        lith1: '',
+        luth1: '',
+        laruth1: '',
+        loth1: '',
+        ladh1: '',
+        vidhilidh1: '',
+        aashirlidh1: '',
+        ludh1: '',
+        laradh1: ''
       },
       {
         sequenceNo: 2,
@@ -292,7 +312,17 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
         vidhilidh: '',
         aashirlidh: '',
         ludh: '',
-        laradh: ''
+        laradh: '',
+        lath1: '',
+        lith1: '',
+        luth1: '',
+        laruth1: '',
+        loth1: '',
+        ladh1: '',
+        vidhilidh1: '',
+        aashirlidh1: '',
+        ludh1: '',
+        laradh1: ''
       },
       {
         sequenceNo: 3,
@@ -313,7 +343,17 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
         vidhilidh: '',
         aashirlidh: '',
         ludh: '',
-        laradh: ''
+        laradh: '',
+        lath1: '',
+        lith1: '',
+        luth1: '',
+        laruth1: '',
+        loth1: '',
+        ladh1: '',
+        vidhilidh1: '',
+        aashirlidh1: '',
+        ludh1: '',
+        laradh1: ''
       }
     ];
 
@@ -340,7 +380,17 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       { wch: 80 }, // vidhilidh
       { wch: 80 }, // aashirlidh
       { wch: 80 }, // ludh
-      { wch: 80 }  // laradh
+      { wch: 80 }, // laradh
+      { wch: 80 }, // lath1
+      { wch: 80 }, // lith1
+      { wch: 80 }, // luth1
+      { wch: 80 }, // laruth1
+      { wch: 80 }, // loth1
+      { wch: 80 }, // ladh1
+      { wch: 80 }, // vidhilidh1
+      { wch: 80 }, // aashirlidh1
+      { wch: 80 }, // ludh1
+      { wch: 80 }  // laradh1
     ];
     worksheet['!cols'] = columnWidths;
 
@@ -426,7 +476,17 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
         { key: 'vidhilidh', label: 'विधिलिङ्' },
         { key: 'aashirlidh', label: 'आशीर्लिङ्' },
         { key: 'ludh', label: 'लुङ् (अद्यतन भूत)' },
-        { key: 'laradh', label: 'लृङ् (भविष्यत्)' }
+        { key: 'laradh', label: 'लृङ् (भविष्यत्)' },
+        { key: 'lath1', label: 'लट् (वर्तमान) ' },
+        { key: 'lith1', label: 'लिट् (परोक्ष) ' },
+        { key: 'luth1', label: 'लुट् (अनद्यतन भविष्यत्) ' },
+        { key: 'laruth1', label: 'लृट् (अद्यतन भविष्यत्) ' },
+        { key: 'loth1', label: 'लोट् (आज्ञार्थ) ' },
+        { key: 'ladh1', label: 'लङ् (अनद्यतन भूत)' },
+        { key: 'vidhilidh1', label: 'विधिलिङ् ' },
+        { key: 'aashirlidh1', label: 'आशीर्लिङ् ' },
+        { key: 'ludh1', label: 'लुङ् (अद्यतन भूत) ' },
+        { key: 'laradh1', label: 'लृङ् (भविष्यत्) ' }
     ];
 
     for (let i = 0; i < rows.length; i++) {
@@ -447,12 +507,40 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
 
       // Generate structure HTML from Sanskrit grammar fields
       let structureHtml = '';
-      fields.forEach(field => {
+      
+      // Split fields into two groups: परस्मै पद (first 10) and आत्मनेपद (next 10)
+      const parasmaipada_fields = fields.slice(0, 10);
+      const atmaneapada_fields = fields.slice(10, 20);
+      
+      // Check if any परस्मै पद fields have values
+      let parasmaipada_html = '';
+      parasmaipada_fields.forEach(field => {
         const value = row[field.key] || row[field.key.charAt(0).toUpperCase() + field.key.slice(1)];
         if (value) {
-          structureHtml += generateTable(field.label, value);
+          parasmaipada_html += generateTable(field.label, value);
         }
       });
+      
+      // Add परस्मै पद section if there are tables
+      if (parasmaipada_html) {
+        structureHtml += '<h3 style="color: #2c3e50; margin-top: 20px; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px;">परस्मै पद</h3>';
+        structureHtml += parasmaipada_html;
+      }
+      
+      // Check if any आत्मनेपद fields have values
+      let atmaneapada_html = '';
+      atmaneapada_fields.forEach(field => {
+        const value = row[field.key] || row[field.key.charAt(0).toUpperCase() + field.key.slice(1)];
+        if (value) {
+          atmaneapada_html += generateTable(field.label, value);
+        }
+      });
+      
+      // Add आत्मनेपद section if there are tables
+      if (atmaneapada_html) {
+        structureHtml += '<h3 style="color: #2c3e50; margin-top: 20px; margin-bottom: 15px; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;">आत्मनेपद</h3>';
+        structureHtml += atmaneapada_html;
+      }
 
       contents.push({
         subCategory: req.params.subId,

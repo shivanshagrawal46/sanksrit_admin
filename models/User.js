@@ -2,6 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        unique: true,
+        trim: true
+        // Will be auto-generated from firstName + lastName
+    },
     firstName: {
         type: String,
         required: true,
@@ -48,10 +54,31 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Hash password before saving
+// Generate username from firstName and lastName before saving
 userSchema.pre('save', async function(next) {
-    if (!this.isModified('password') || !this.password) return next();
-    this.password = await bcrypt.hash(this.password, 10);
+    // Generate username if not already set
+    if (!this.username && this.firstName && this.lastName) {
+        // Create username: firstname.lastname (lowercase, no spaces)
+        let baseUsername = `${this.firstName}.${this.lastName}`.toLowerCase().replace(/\s+/g, '');
+        
+        // Check if username already exists
+        let username = baseUsername;
+        let counter = 1;
+        
+        // Keep trying with incremental numbers until we find a unique username
+        while (await mongoose.model('User').findOne({ username, _id: { $ne: this._id } })) {
+            username = `${baseUsername}${counter}`;
+            counter++;
+        }
+        
+        this.username = username;
+    }
+    
+    // Hash password if modified
+    if (this.isModified('password') && this.password) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    
     next();
 });
 

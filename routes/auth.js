@@ -573,4 +573,40 @@ router.get('/users', auth, async (req, res) => {
     }
 });
 
+// ==================== DELETE ACCOUNT ====================
+// DELETE /api/auth/delete-account
+router.delete('/delete-account', auth, async (req, res) => {
+    try {
+        const userId = req.user._id;
+        
+        // Prevent admin accounts from being deleted via this endpoint
+        if (req.user.isAdmin) {
+            return res.status(403).json({ 
+                error: 'Admin accounts cannot be deleted through this endpoint.',
+                success: false 
+            });
+        }
+        
+        // Log the deletion attempt
+        console.log(`User account deletion requested - User ID: ${userId}, Email: ${req.user.email}`);
+        
+        // Delete the user account
+        await User.findByIdAndDelete(userId);
+        
+        console.log(`User account deleted successfully - User ID: ${userId}, Email: ${req.user.email}`);
+        
+        res.json({
+            success: true,
+            message: 'Your account has been permanently deleted.',
+            deletedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ 
+            error: error.message || 'Failed to delete account. Please try again.',
+            success: false 
+        });
+    }
+});
+
 module.exports = router;

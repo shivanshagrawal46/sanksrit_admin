@@ -105,10 +105,10 @@
                     <span>/</span>
                 <% } %>
             <% } %>
-            <% if (selectedGeetaId) { %>
-                <% const selectedBk = geetas.find(b => b._id.toString() === selectedGeetaId); %>
+            <% if (selectedBookId) { %>
+                <% const selectedBk = books.find(b => b._id.toString() === selectedBookId); %>
                 <% if (selectedBk && selectedCategoryId) { %>
-                    <a href="/geeta/category/<%= selectedCategoryId %>/geeta/<%= selectedGeetaId %>" style="color: #2D3250; text-decoration: none;"><%= selectedBk.name %></a>
+                    <a href="/geeta/category/<%= selectedCategoryId %>/book/<%= selectedBookId %>" style="color: #2D3250; text-decoration: none;"><%= selectedBk.name %></a>
                     <span>/</span>
                 <% } %>
             <% } %>
@@ -134,11 +134,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="geeta" class="form-label">Geeta</label>
-                    <select class="form-select" id="geeta" name="geeta" required>
+                    <label for="book" class="form-label">Geeta</label>
+                    <select class="form-select" id="book" name="book" required>
                         <option value="">Select a book</option>
-                        <% geetas.forEach(function(book) { %>
-                            <option value="<%= book._id %>" data-category="<%= book.category %>" data-name="<%= book.name %>" <%= selectedGeetaId && selectedGeetaId === book._id.toString() ? 'selected' : '' %>><%= book.name %></option>
+                        <% books.forEach(function(book) { %>
+                            <option value="<%= book._id %>" data-category="<%= book.category %>" data-name="<%= book.name %>" <%= selectedBookId && selectedBookId === book._id.toString() ? 'selected' : '' %>><%= book.name %></option>
                         <% }); %>
                     </select>
                 </div>
@@ -149,7 +149,7 @@
                 </div>
 
                 <div class="d-flex gap-3">
-                    <a href="<%= selectedCategoryId && selectedGeetaId ? '/geeta/category/' + selectedCategoryId + '/geeta/' + selectedGeetaId : (selectedCategoryId ? '/geeta/category/' + selectedCategoryId : '/geeta') %>" class="btn btn-outline-secondary" id="cancelBtn">Cancel</a>
+                    <a href="<%= selectedCategoryId && selectedBookId ? '/geeta/category/' + selectedCategoryId + '/book/' + selectedBookId : (selectedCategoryId ? '/geeta/category/' + selectedCategoryId : '/geeta') %>" class="btn btn-outline-secondary" id="cancelBtn">Cancel</a>
                     <button type="submit" class="btn btn-primary">Save Chapter</button>
                 </div>
             </form>
@@ -160,13 +160,13 @@
     <script>
         // Filter geetas based on selected category
         const categorySelect = document.getElementById('category');
-        const bookSelect = document.getElementById('geeta');
+        const bookSelect = document.getElementById('book');
         const cancelBtn = document.getElementById('cancelBtn');
         
         function filterGeeta() {
             const categoryId = categorySelect.value;
             const options = bookSelect.getElementsByTagName('option');
-            const selectedGeetaId = '<%= selectedGeetaId || "" %>';
+            const selectedBookId = '<%= selectedBookId || "" %>';
 
             for (let option of options) {
                 if (option.value === '') continue; // Skip the default option
@@ -178,13 +178,13 @@
             }
 
             // Reset book selection only if category changed and book doesn't match
-            if (categoryId && selectedGeetaId) {
-                const selectedOption = Array.from(options).find(opt => opt.value === selectedGeetaId);
+            if (categoryId && selectedBookId) {
+                const selectedOption = Array.from(options).find(opt => opt.value === selectedBookId);
                 if (selectedOption && selectedOption.dataset.category !== categoryId) {
                     bookSelect.value = '';
                 }
-            } else if (!categoryId || !selectedGeetaId) {
-                bookSelect.value = selectedGeetaId || '';
+            } else if (!categoryId || !selectedBookId) {
+                bookSelect.value = selectedBookId || '';
             }
             
             updateCancelButton();
@@ -195,7 +195,7 @@
             const bookId = bookSelect.value;
             
             if (categoryId && bookId) {
-                cancelBtn.href = '/geeta/category/' + categoryId + '/geeta/' + bookId;
+                cancelBtn.href = '/geeta/category/' + categoryId + '/book/' + bookId;
             } else if (categoryId) {
                 cancelBtn.href = '/geeta/category/' + categoryId;
             } else {

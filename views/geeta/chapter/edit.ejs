@@ -94,7 +94,7 @@
                 <span>/</span>
             <% } %>
             <% if (chapter.book && chapter.book._id) { %>
-                <a href="/geeta/category/<%= chapter.category._id || chapter.category %>/geeta/<%= chapter.book._id %>" style="color: #2D3250; text-decoration: none;"><%= chapter.book.name %></a>
+                <a href="/geeta/category/<%= chapter.category._id || chapter.category %>/book/<%= chapter.book._id %>" style="color: #2D3250; text-decoration: none;"><%= chapter.book.name %></a>
                 <span>/</span>
             <% } %>
             <span>Edit <%= chapter.name %></span>

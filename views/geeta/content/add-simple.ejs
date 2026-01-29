@@ -160,9 +160,9 @@
             <span>/</span>
             <a href="/geeta/category/<%= category._id %>"><%= category.name %></a>
             <span>/</span>
-            <a href="/geeta/category/<%= category._id %>/geeta/<%= book._id %>"><%= book.name %></a>
+            <a href="/geeta/category/<%= category._id %>/book/<%= book._id %>"><%= book.name %></a>
             <span>/</span>
-            <a href="/geeta/category/<%= category._id %>/geeta/<%= book._id %>/chapter/<%= chapter._id %>"><%= chapter.name %></a>
+            <a href="/geeta/category/<%= category._id %>/book/<%= book._id %>/chapter/<%= chapter._id %>"><%= chapter.name %></a>
             <span>/</span>
             <span>Add Content</span>
         </div>
@@ -242,7 +242,7 @@
                 </div>
 
                 <div class="d-flex gap-3">
-                    <a href="/geeta/category/<%= category._id %>/geeta/<%= book._id %>/chapter/<%= chapter._id %>" class="btn btn-outline-secondary">Cancel</a>
+                    <a href="/geeta/category/<%= category._id %>/book/<%= book._id %>/chapter/<%= chapter._id %>" class="btn btn-outline-secondary">Cancel</a>
                     <button type="submit" class="btn btn-primary">Save Content</button>
                 </div>
             </form>

@@ -215,13 +215,13 @@
                     <ul class="chapter-list">
                         <% chapters.forEach(function(chapter) { %>
                             <li class="chapter-item">
-                                <a href="/geeta/category/<%= category._id %>/geeta/<%= book._id %>/chapter/<%= chapter._id %>" class="chapter-link">
+                                <a href="/geeta/category/<%= category._id %>/book/<%= book._id %>/chapter/<%= chapter._id %>" class="chapter-link">
                                     <%= chapter.name %>
                                 </a>
                                 <div class="chapter-actions">
-                                    <a href="/geeta/chapter/edit/<%= chapter._id %>?return=/geeta/category/<%= category._id %>/geeta/<%= book._id %>" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <a href="/geeta/chapter/edit/<%= chapter._id %>?return=/geeta/category/<%= category._id %>/book/<%= book._id %>" class="btn btn-sm btn-outline-primary">Edit</a>
                                     <form action="/geeta/chapter/delete/<%= chapter._id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this chapter? This will also delete all content in this chapter.');">
-                                        <input type="hidden" name="return" value="/geeta/category/<%= category._id %>/geeta/<%= book._id %>">
+                                        <input type="hidden" name="return" value="/geeta/category/<%= category._id %>/book/<%= book._id %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
                                 </div>

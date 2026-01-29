@@ -489,6 +489,7 @@
                     </a>
                 <% }); %>
             </div>
+            <% if (selectedSubCategory) { %>
             <div class="content-card">
                 <div class="card-header">
                     <h2 class="card-title">Kosh Content for <%= parent.name %></h2>
@@ -592,6 +593,14 @@
                     <% } %>
                 </div>
             </div>
+            <% } else { %>
+                <div class="content-card">
+                    <div class="card-body text-center py-5">
+                        <h3>Please select a subcategory from the navigation above</h3>
+                        <p class="mt-3">Select a subcategory to view and manage its content.</p>
+                    </div>
+                </div>
+            <% } %>
         <% } else { %>
             <div class="content-card">
                 <div class="card-body text-center py-5">
@@ -637,9 +646,14 @@
         function deleteAllContent() {
             if (confirm('⚠️ WARNING: This will permanently delete ALL content in this subcategory! Are you absolutely sure?')) {
                 if (confirm('⚠️ FINAL WARNING: This action cannot be undone! Click OK to proceed with deleting ALL content.')) {
+                    const subCategoryId = '<%= typeof selectedSubCategory !== "undefined" && selectedSubCategory ? selectedSubCategory._id : "" %>';
+                    if (!subCategoryId) {
+                        alert('Error: No subcategory selected');
+                        return;
+                    }
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = window.location.pathname.replace(/\/kosh-subcategories.*/, '') + '/kosh-subcategory/<%= selectedSubCategory ? selectedSubCategory._id : "" %>/delete-all-content';
+                    form.action = '/kosh-subcategory/' + subCategoryId + '/delete-all-content';
                     document.body.appendChild(form);
                     form.submit();
                 }

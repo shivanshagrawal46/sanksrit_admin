@@ -18,6 +18,12 @@ router.get('/kosh-category/:parentId/subcategories', requireAuth, async (req, re
     parent, 
     subcategories, 
     koshCategories: categories,
+    selectedSubCategory: null,
+    contents: [],
+    contentTotal: 0,
+    currentPage: 1,
+    totalPages: 1,
+    subcategoryMode: true,
     username: req.session.username
   });
 });

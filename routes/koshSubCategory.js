@@ -90,7 +90,32 @@ router.post('/kosh-subcategory/:id/edit', requireAuth, async (req, res) => {
   }
 });
 
-// Delete subcategory
+// Delete subcategory (support both POST and DELETE)
+// Also deletes all kosh content associated with this subcategory
+router.post('/kosh-subcategory/:id/delete', requireAuth, async (req, res) => {
+  try {
+    const subcategory = await KoshSubCategory.findById(req.params.id);
+    if (!subcategory) {
+      return res.redirect('/kosh-subcategories');
+    }
+    const parentId = subcategory.parentCategory;
+    
+    // Delete all kosh content for this subcategory first
+    const KoshContent = require('../models/KoshContent');
+    const deletedContent = await KoshContent.deleteMany({ subCategory: req.params.id });
+    console.log(`Deleted ${deletedContent.deletedCount} content items from subcategory: ${subcategory.name}`);
+    
+    // Then delete the subcategory itself
+    await KoshSubCategory.findByIdAndDelete(req.params.id);
+    console.log(`Deleted subcategory: ${subcategory.name}`);
+    
+    res.redirect(`/kosh-subcategories?category=${parentId}`);
+  } catch (err) {
+    console.error('Error deleting subcategory:', err);
+    res.redirect('/kosh-subcategories');
+  }
+});
+
 router.delete('/kosh-subcategory/:id/delete', requireAuth, async (req, res) => {
   try {
     const subcategory = await KoshSubCategory.findById(req.params.id);
@@ -98,10 +123,19 @@ router.delete('/kosh-subcategory/:id/delete', requireAuth, async (req, res) => {
       return res.redirect('/kosh-subcategories');
     }
     const parentId = subcategory.parentCategory;
+    
+    // Delete all kosh content for this subcategory first
+    const KoshContent = require('../models/KoshContent');
+    const deletedContent = await KoshContent.deleteMany({ subCategory: req.params.id });
+    console.log(`Deleted ${deletedContent.deletedCount} content items from subcategory: ${subcategory.name}`);
+    
+    // Then delete the subcategory itself
     await KoshSubCategory.findByIdAndDelete(req.params.id);
+    console.log(`Deleted subcategory: ${subcategory.name}`);
+    
     res.redirect(`/kosh-subcategories?category=${parentId}`);
   } catch (err) {
-    console.error(err);
+    console.error('Error deleting subcategory:', err);
     res.redirect('/kosh-subcategories');
   }
 });

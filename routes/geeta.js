@@ -206,7 +206,7 @@ router.post('/name/add', upload.single('book_image'), async (req, res) => {
             book_image
         });
 
-        await geeta.save();
+        await book.save();
         // Redirect back to category books page if category is provided
         if (req.body.category) {
             res.redirect(`/geeta/category/${req.body.category}`);
@@ -285,7 +285,7 @@ router.post('/name/delete/:id', async (req, res) => {
             return res.status(400).send('Cannot delete book with existing chapters. Please delete all chapters first.');
         }
 
-        await geeta.deleteOne();
+        await book.deleteOne();
         res.redirect(returnPath);
     } catch (err) {
         console.error(err);
@@ -605,7 +605,7 @@ router.get('/content/edit/:id', async (req, res) => {
             .populate('category', '_id name')
             .sort({ name: 1 });
         const chapters = await GeetaChapter.find()
-            .populate('geeta', '_id name')
+            .populate('book', '_id name')
             .sort({ name: 1 });
         
         if (!content) {
@@ -691,7 +691,7 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
                 .populate('category', '_id name')
                 .sort({ name: 1 });
             const chapters = await GeetaChapter.find()
-                .populate('geeta', '_id name')
+                .populate('book', '_id name')
                 .sort({ name: 1 });
             
             res.render('geeta/content/edit', {
@@ -748,7 +748,7 @@ router.get('/chapter/export-excel', async (req, res) => {
 
         const dataToExport = chapters.map(entry => ({
             Category: entry.category ? entry.category.name : '',
-            Book: entry.book ? entry.geeta.name : '',
+            Book: entry.book ? entry.book.name : '',
             Name: entry.name || ''
         }));
 
@@ -1171,7 +1171,7 @@ router.get('/category/:categoryId', async (req, res) => {
         
         res.render('geeta/category/books', {
             category,
-            books,
+            geetas: books,  // Pass as 'geetas' to match the view
             activePage: 'geeta',
             username: req.session ? req.session.username : null
         });

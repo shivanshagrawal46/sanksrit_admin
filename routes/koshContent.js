@@ -163,12 +163,59 @@ router.post('/kosh-content/:id/edit', requireAuth, upload.single('image'), async
   }
 });
 
-// Delete content
+// Delete content (single)
 router.post('/kosh-content/:id/delete', requireAuth, async (req, res) => {
   const content = await KoshContent.findById(req.params.id);
   await KoshContent.findByIdAndDelete(req.params.id);
   const subcategory = await KoshSubCategory.findById(content.subCategory);
   res.redirect(`/kosh-subcategories/${subcategory.parentCategory}?sub=${subcategory._id}`);
+});
+
+// Delete all content for a subcategory
+router.post('/kosh-subcategory/:subId/delete-all-content', requireAuth, async (req, res) => {
+  try {
+    const subcategory = await KoshSubCategory.findById(req.params.subId);
+    if (!subcategory) {
+      return res.status(404).send('Subcategory not found');
+    }
+    
+    // Delete all content for this subcategory
+    const result = await KoshContent.deleteMany({ subCategory: req.params.subId });
+    console.log(`Deleted ${result.deletedCount} content items from subcategory: ${subcategory.name}`);
+    
+    res.redirect(`/kosh-subcategories/${subcategory.parentCategory}?sub=${subcategory._id}`);
+  } catch (err) {
+    console.error('Error deleting all content:', err);
+    res.status(500).send('Error deleting content');
+  }
+});
+
+// Bulk delete selected content
+router.post('/kosh-subcategory/:subId/delete-selected', requireAuth, async (req, res) => {
+  try {
+    const subcategory = await KoshSubCategory.findById(req.params.subId);
+    if (!subcategory) {
+      return res.status(404).send('Subcategory not found');
+    }
+    
+    // Get selected content IDs from form data
+    const selectedIds = req.body.selectedContent;
+    if (!selectedIds || (Array.isArray(selectedIds) && selectedIds.length === 0)) {
+      return res.redirect(`/kosh-subcategories/${subcategory.parentCategory}?sub=${subcategory._id}`);
+    }
+    
+    // Ensure selectedIds is an array
+    const idsArray = Array.isArray(selectedIds) ? selectedIds : [selectedIds];
+    
+    // Delete selected content
+    const result = await KoshContent.deleteMany({ _id: { $in: idsArray } });
+    console.log(`Deleted ${result.deletedCount} selected content items`);
+    
+    res.redirect(`/kosh-subcategories/${subcategory.parentCategory}?sub=${subcategory._id}`);
+  } catch (err) {
+    console.error('Error deleting selected content:', err);
+    res.status(500).send('Error deleting content');
+  }
 });
 
 // Excel import (GET)
@@ -238,6 +285,16 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       'search',
       'youtubeLink',
       'image',
+      // Vibhakti columns for word forms (शब्द रूप)
+      '1_ekvachan', '1_dvivachan', '1_bahuvachan',  // प्रथमा
+      '2_ekvachan', '2_dvivachan', '2_bahuvachan',  // द्वितीया
+      '3_ekvachan', '3_dvivachan', '3_bahuvachan',  // तृतीया
+      '4_ekvachan', '4_dvivachan', '4_bahuvachan',  // चतुर्थी
+      '5_ekvachan', '5_dvivachan', '5_bahuvachan',  // पंचमी
+      '6_ekvachan', '6_dvivachan', '6_bahuvachan',  // षष्ठी
+      '7_ekvachan', '7_dvivachan', '7_bahuvachan',  // सप्तमी
+      '8_ekvachan', '8_dvivachan', '8_bahuvachan',  // सम्बोधन
+      // Verb conjugation fields
       'lath',
       'lith', 
       'luth',
@@ -264,14 +321,24 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
     const sampleData = [
       {
         sequenceNo: 1,
-        hindiWord: 'गच्छति',
-        englishWord: 'goes',
-        hinglishWord: 'jata hai',
-        meaning: 'goes (present tense)',
+        hindiWord: 'बालक',
+        englishWord: 'boy',
+        hinglishWord: 'balak',
+        meaning: 'boy (masculine noun)',
         extra: 'Additional information',
-        search: 'गच्छति,goes',
+        search: 'बालक,boy',
         youtubeLink: 'https://youtube.com/watch?v=example',
         image: 'image_url_or_filename.jpg',
+        // Sample vibhakti data (बालक word forms)
+        '1_ekvachan': 'बालकः', '1_dvivachan': 'बालकौ', '1_bahuvachan': 'बालकाः',
+        '2_ekvachan': 'बालकम्', '2_dvivachan': 'बालकौ', '2_bahuvachan': 'बालकान्',
+        '3_ekvachan': 'बालकेन', '3_dvivachan': 'बालकाभ्याम्', '3_bahuvachan': 'बालकैः',
+        '4_ekvachan': 'बालकाय', '4_dvivachan': 'बालकाभ्याम्', '4_bahuvachan': 'बालकेभ्यः',
+        '5_ekvachan': 'बालकात्', '5_dvivachan': 'बालकाभ्याम्', '5_bahuvachan': 'बालकेभ्यः',
+        '6_ekvachan': 'बालकस्य', '6_dvivachan': 'बालकयोः', '6_bahuvachan': 'बालकानाम्',
+        '7_ekvachan': 'बालके', '7_dvivachan': 'बालकयोः', '7_bahuvachan': 'बालकेषु',
+        '8_ekvachan': 'हे बालक!', '8_dvivachan': 'हे बालकौ!', '8_bahuvachan': 'हे बालकाः!',
+        // Verb conjugation (use for verbs)
         lath: 'गच्छति;गच्छतः;गच्छन्ति;गच्छसि;गच्छथः;गच्छथ;गच्छामि;गच्छावः;गच्छामः',
         lith: 'जगाम;जगामतुः;जग्मुः;जगमिथ;जगमथुः;जगम;जगाम;जगामिव;जगामिम',
         luth: 'गन्ता;गन्तारौ;गन्तारः;गन्तासि;गन्तास्थः;गन्तास्थ;गन्तास्मि;गन्तास्वः;गन्तास्मः',
@@ -303,6 +370,14 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
         search: '',
         youtubeLink: '',
         image: '',
+        '1_ekvachan': '', '1_dvivachan': '', '1_bahuvachan': '',
+        '2_ekvachan': '', '2_dvivachan': '', '2_bahuvachan': '',
+        '3_ekvachan': '', '3_dvivachan': '', '3_bahuvachan': '',
+        '4_ekvachan': '', '4_dvivachan': '', '4_bahuvachan': '',
+        '5_ekvachan': '', '5_dvivachan': '', '5_bahuvachan': '',
+        '6_ekvachan': '', '6_dvivachan': '', '6_bahuvachan': '',
+        '7_ekvachan': '', '7_dvivachan': '', '7_bahuvachan': '',
+        '8_ekvachan': '', '8_dvivachan': '', '8_bahuvachan': '',
         lath: '',
         lith: '',
         luth: '',
@@ -326,15 +401,23 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       },
       {
         sequenceNo: 3,
-        hindiWord: 'पठति',
-        englishWord: 'reads',
-        hinglishWord: '',
-        meaning: 'reads (present tense)',
+        hindiWord: 'गच्छति',
+        englishWord: 'goes',
+        hinglishWord: 'jata hai',
+        meaning: 'goes (verb - present tense)',
         extra: '',
-        search: 'पठति,reads',
+        search: 'गच्छति,goes',
         youtubeLink: '',
         image: '',
-        lath: '',
+        '1_ekvachan': '', '1_dvivachan': '', '1_bahuvachan': '',
+        '2_ekvachan': '', '2_dvivachan': '', '2_bahuvachan': '',
+        '3_ekvachan': '', '3_dvivachan': '', '3_bahuvachan': '',
+        '4_ekvachan': '', '4_dvivachan': '', '4_bahuvachan': '',
+        '5_ekvachan': '', '5_dvivachan': '', '5_bahuvachan': '',
+        '6_ekvachan': '', '6_dvivachan': '', '6_bahuvachan': '',
+        '7_ekvachan': '', '7_dvivachan': '', '7_bahuvachan': '',
+        '8_ekvachan': '', '8_dvivachan': '', '8_bahuvachan': '',
+        lath: 'गच्छति;गच्छतः;गच्छन्ति;गच्छसि;गच्छथः;गच्छथ;गच्छामि;गच्छावः;गच्छामः',
         lith: '',
         luth: '',
         laruth: '',
@@ -371,6 +454,16 @@ router.get('/kosh-subcategory/:subId/export-template', requireAuth, async (req, 
       { wch: 20 }, // search
       { wch: 30 }, // youtubeLink
       { wch: 20 }, // image
+      // Vibhakti columns
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 1 - प्रथमा
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 2 - द्वितीया
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 3 - तृतीया
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 4 - चतुर्थी
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 5 - पंचमी
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 6 - षष्ठी
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 7 - सप्तमी
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, // 8 - सम्बोधन
+      // Verb conjugation columns
       { wch: 80 }, // lath
       { wch: 80 }, // lith
       { wch: 80 }, // luth
@@ -507,6 +600,55 @@ router.post('/kosh-subcategory/:subId/import-excel', requireAuth, upload.single(
 
       // Generate structure HTML from Sanskrit grammar fields
       let structureHtml = '';
+      
+      // Check for vibhakti-based columns (1_ekvachan, 1_dvivachan, etc.)
+      const vibhaktiRows = [
+        { num: '1', label: 'प्रथमा' },
+        { num: '2', label: 'द्वितीया' },
+        { num: '3', label: 'तृतीया' },
+        { num: '4', label: 'चतुर्थी' },
+        { num: '5', label: 'पंचमी' },
+        { num: '6', label: 'षष्ठी' },
+        { num: '7', label: 'सप्तमी' },
+        { num: '8', label: 'सम्बोधन' }
+      ];
+      
+      // Check if any vibhakti columns exist
+      let hasVibhaktiData = false;
+      for (const vib of vibhaktiRows) {
+        if (row[`${vib.num}_ekvachan`] || row[`${vib.num}_dvivachan`] || row[`${vib.num}_bahuvachan`]) {
+          hasVibhaktiData = true;
+          break;
+        }
+      }
+      
+      // Generate vibhakti table if data exists
+      if (hasVibhaktiData) {
+        structureHtml += '<h3 style="color: #2c3e50; margin-top: 20px; margin-bottom: 15px; border-bottom: 2px solid #e67e22; padding-bottom: 5px;">शब्द रूप (Word Forms)</h3>';
+        structureHtml += '<table border="1" style="border-collapse:collapse;width:100%;text-align:center;margin-bottom:20px;">';
+        structureHtml += '<thead><tr style="background-color:#f39c12;color:white;">';
+        structureHtml += '<th style="padding:10px;font-weight:bold;">विभक्ति</th>';
+        structureHtml += '<th style="padding:10px;font-weight:bold;">एकवचन</th>';
+        structureHtml += '<th style="padding:10px;font-weight:bold;">द्विवचन</th>';
+        structureHtml += '<th style="padding:10px;font-weight:bold;">बहुवचन</th>';
+        structureHtml += '</tr></thead><tbody>';
+        
+        vibhaktiRows.forEach((vib, idx) => {
+          const bgColor = idx % 2 === 0 ? '#fff3e0' : '#ffffff';
+          const ekvachan = row[`${vib.num}_ekvachan`] || '';
+          const dvivachan = row[`${vib.num}_dvivachan`] || '';
+          const bahuvachan = row[`${vib.num}_bahuvachan`] || '';
+          
+          structureHtml += `<tr style="background-color:${bgColor};">`;
+          structureHtml += `<td style="padding:8px;font-weight:600;color:#e67e22;">${vib.label}</td>`;
+          structureHtml += `<td style="padding:8px;">${ekvachan}</td>`;
+          structureHtml += `<td style="padding:8px;">${dvivachan}</td>`;
+          structureHtml += `<td style="padding:8px;">${bahuvachan}</td>`;
+          structureHtml += '</tr>';
+        });
+        
+        structureHtml += '</tbody></table>';
+      }
       
       // Split fields into two groups: परस्मै पद (first 10) and आत्मनेपद (next 10)
       const parasmaipada_fields = fields.slice(0, 10);

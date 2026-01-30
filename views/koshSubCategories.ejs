@@ -462,8 +462,7 @@
                                             <td><%= subcategory.position %></td>
                                             <td><%= subcategory.createdAt ? new Date(subcategory.createdAt).toLocaleDateString() : '' %></td>
                             <td style="white-space: nowrap;">
-                                                <a href="/kosh-subcategories?category=<%= parent._id %>&sub=<%= subcategory._id %>" class="btn btn-primary btn-sm me-1">Content</a>
-                                                <a href="/kosh-subcategory/<%= subcategory._id %>/edit" class="btn btn-secondary btn-sm me-1">Edit</a>
+                                                <a href="/kosh-subcategory/<%= subcategory._id %>/edit" class="btn btn-warning btn-sm me-2">Edit</a>
                                                 <form action="/kosh-subcategory/<%= subcategory._id %>/delete" method="POST" class="d-inline" data-subcategory-name="<%= subcategory.name %>" onsubmit="return confirmDeleteSubcategory(this)">
                                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                                 </form>

@@ -66,6 +66,10 @@ const validateGoogleConfig = () => {
         warnings.push('GOOGLE_ANDROID_CLIENT_ID not set in environment');
     }
     
+    if (!process.env.GOOGLE_IOS_CLIENT_ID) {
+        warnings.push('GOOGLE_IOS_CLIENT_ID not set in environment');
+    }
+    
     if (!process.env.JWT_SECRET) {
         issues.push('JWT_SECRET not set in environment - JWT generation will fail');
     }
@@ -80,12 +84,14 @@ const validateGoogleConfig = () => {
 // Get Google Client IDs from environment
 const WEB_CLIENT_ID = process.env.GOOGLE_WEB_CLIENT_ID || '';
 const ANDROID_CLIENT_ID = process.env.GOOGLE_ANDROID_CLIENT_ID || '';
+const IOS_CLIENT_ID = process.env.GOOGLE_IOS_CLIENT_ID || '';
 
 // Validate and log configuration on startup
 const configValidation = validateGoogleConfig();
 logGoogleSignIn('INFO', 'Google Sign-In Configuration', {
     hasWebClientId: !!process.env.GOOGLE_WEB_CLIENT_ID,
     hasAndroidClientId: !!process.env.GOOGLE_ANDROID_CLIENT_ID,
+    hasIosClientId: !!process.env.GOOGLE_IOS_CLIENT_ID,
     hasJwtSecret: !!process.env.JWT_SECRET,
     hasMongoUri: !!process.env.MONGODB_URI,
     configIssues: configValidation.issues,
@@ -285,7 +291,8 @@ router.post('/google', async (req, res) => {
         logGoogleSignIn('INFO', 'Verifying Token Configuration', {
             requestId,
             hasWebClientId: !!WEB_CLIENT_ID,
-            hasAndroidClientId: !!ANDROID_CLIENT_ID
+            hasAndroidClientId: !!ANDROID_CLIENT_ID,
+            hasIosClientId: !!IOS_CLIENT_ID
         });
         stepTimings.configCheck = Date.now() - configCheckStartTime;
 
@@ -293,14 +300,15 @@ router.post('/google', async (req, res) => {
         let ticket, payload;
         const verificationStartTime = Date.now();
         try {
+            const audience = [WEB_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID].filter(Boolean);
             logGoogleSignIn('INFO', 'Attempting Google Token Verification', {
                 requestId,
-                audience: [WEB_CLIENT_ID, ANDROID_CLIENT_ID]
+                audience
             });
 
             ticket = await client.verifyIdToken({
                 idToken: cleanToken,
-                audience: [WEB_CLIENT_ID, ANDROID_CLIENT_ID]
+                audience
             });
 
             payload = ticket.getPayload();

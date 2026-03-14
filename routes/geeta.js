@@ -772,17 +772,22 @@ router.post('/content/delete/:id', async (req, res) => {
             return res.status(404).send('Content not found');
         }
 
-        const chapterId = content.chapter;
+        const chapterId = content.chapter?._id || content.chapter;
         await content.deleteOne();
+        
+        // Use returnTo if provided (from chapter page), otherwise build chapter URL
+        const returnTo = req.body.returnTo;
+        if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/geeta/')) {
+            return res.redirect(returnTo + '?success=' + encodeURIComponent('Content deleted successfully'));
+        }
         
         // Redirect back to chapter page
         if (chapterId) {
             const chapter = await GeetaChapter.findById(chapterId).populate('book');
-            if (chapter && chapter.book) {
+            if (chapter?.book) {
                 const bookCategory = await GeetaName.findById(chapter.book._id).populate('category');
-                if (bookCategory && bookCategory.category) {
-                    res.redirect(`/geeta/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chapterId}`);
-                    return;
+                if (bookCategory?.category) {
+                    return res.redirect(`/geeta/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chapterId}?success=` + encodeURIComponent('Content deleted successfully'));
                 }
             }
         }

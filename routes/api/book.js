@@ -155,7 +155,7 @@ router.get('/category/:categoryId/:nameId/:chapterId', async (req, res) => {
             book: book._id,
             chapter: chapter._id
         })
-        .select('id title_hn title_en title_hinglish meaning details extra images video_links')
+        .select('id sequence title_hn title_en title_hinglish meaning details extra images video_links')
         .sort({ sequence: 1 })
         .skip(skip)
         .limit(limit);
@@ -214,7 +214,7 @@ router.get('/category/:categoryId/:nameId/:chapterId/:contentId', async (req, re
             chapter: chapter._id,
             $or: contentFilters
         })
-        .select('id title_hn title_en title_hinglish meaning details extra images video_links');
+        .select('id sequence title_hn title_en title_hinglish meaning details extra images video_links');
 
         if (!content) {
             return res.status(404).json({

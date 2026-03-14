@@ -446,9 +446,14 @@ router.get('/chapter/:chapterId/contents', async (req, res) => {
         if (!chapter) {
             return res.status(404).send('Chapter not found');
         }
+        const category = chapter.category;
+        const book = chapter.book;
         res.render('geeta/chapter/contents', {
             contents,
             chapter,
+            category,
+            book,
+            username: req.session ? req.session.username : null,
             activePage: 'geeta',
             activeSection: 'chapter'
         });
@@ -549,10 +554,11 @@ router.get('/content/add', async (req, res) => {
 router.post('/content/add', upload.array('images', 10), async (req, res) => {
     try {
         const { 
-            category, book, chapter, 
+            category, book: bookParam, chapter, 
             title_hn, title_en, title_hinglish,
-            meaning, details, extra, video_links 
+            meaning, details, extra, video_links, sequence: seqInput
         } = req.body;
+        const book = bookParam || req.body.geeta;
         
         // Process video links
         const videoLinksArray = video_links ? video_links.split('\n').map(link => link.trim()).filter(link => link) : [];
@@ -560,9 +566,12 @@ router.post('/content/add', upload.array('images', 10), async (req, res) => {
         // Process uploaded images
         const imageLinks = req.files ? req.files.map(file => `/uploads/geeta/${file.filename}`) : [];
 
-        // Get max sequence for this chapter to assign next sequence number
-        const maxContent = await GeetaContent.findOne({ chapter }).sort({ sequence: -1 });
-        const nextSequence = maxContent ? maxContent.sequence + 1 : 1;
+        // Get sequence: use provided value or auto-assign next
+        let sequence = parseInt(seqInput, 10);
+        if (isNaN(sequence) || sequence < 1) {
+            const maxContent = await GeetaContent.findOne({ chapter }).sort({ sequence: -1 });
+            sequence = maxContent ? maxContent.sequence + 1 : 1;
+        }
 
         const content = new GeetaContent({
             category,
@@ -629,10 +638,11 @@ router.get('/content/edit/:id', async (req, res) => {
 router.post('/content/edit/:id', upload.array('images', 10), async (req, res) => {
     try {
         const { 
-            category, book, chapter, 
+            category, book: bookParam, chapter, 
             title_hn, title_en, title_hinglish,
-            meaning, details, extra, video_links 
+            meaning, details, extra, video_links, sequence: seqInput
         } = req.body;
+        const book = bookParam || req.body.geeta;
 
         // Process video links
         const videoLinksArray = video_links ? video_links.split('\n').map(link => link.trim()).filter(link => link) : [];
@@ -652,6 +662,10 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
             extra,
             video_links: videoLinksArray
         };
+        const sequence = parseInt(seqInput, 10);
+        if (!isNaN(sequence) && sequence >= 0) {
+            updateData.sequence = sequence;
+        }
 
         // Only update images if new ones were uploaded
         if (imageLinks.length > 0) {
@@ -706,6 +720,47 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
         } else {
             res.redirect('/geeta/content');
         }
+    }
+});
+
+// Bulk Delete Content
+router.post('/content/delete-bulk', async (req, res) => {
+    try {
+        const { ids, chapter: chapterId, deleteAll } = req.body;
+        let redirectUrl = '/geeta/content';
+
+        if (deleteAll === '1') {
+            if (chapterId) {
+                await GeetaContent.deleteMany({ chapter: chapterId });
+                const chapter = await GeetaChapter.findById(chapterId).populate('book');
+                if (chapter?.book) {
+                    const bookCategory = await GeetaName.findById(chapter.book._id).populate('category');
+                    if (bookCategory?.category) {
+                        redirectUrl = `/geeta/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chapterId}`;
+                    }
+                }
+            } else {
+                await GeetaContent.deleteMany({});
+            }
+        } else if (ids && Array.isArray(ids) && ids.length > 0) {
+            const content = await GeetaContent.findOne({ _id: ids[0] });
+            await GeetaContent.deleteMany({ _id: { $in: ids } });
+            if (content?.chapter) {
+                const chId = content.chapter._id || content.chapter;
+                const chapter = await GeetaChapter.findById(chId).populate('book');
+                if (chapter?.book) {
+                    const bookCategory = await GeetaName.findById(chapter.book._id).populate('category');
+                    if (bookCategory?.category) {
+                        redirectUrl = `/geeta/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chId}`;
+                    }
+                }
+            }
+        }
+
+        res.redirect(redirectUrl + '?success=' + encodeURIComponent('Content deleted successfully'));
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 });
 

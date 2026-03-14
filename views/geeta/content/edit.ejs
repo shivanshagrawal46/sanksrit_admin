@@ -133,7 +133,7 @@
                         <label for="geeta" class="form-label">Geeta</label>
                         <select class="form-control" id="geeta" name="geeta" required>
                             <option value="">Select Geeta</option>
-                            <% geetas.forEach(function(bk) { %>
+                            <% (books || geetas || []).forEach(function(bk) { %>
                                 <option value="<%= bk._id %>" <%= content.book.toString() === bk._id.toString() ? 'selected' : '' %>>
                                     <%= bk.name %>
                                 </option>
@@ -154,6 +154,12 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label for="sequence" class="form-label">Sequence No</label>
+                        <input type="number" class="form-control" id="sequence" name="sequence" min="0" value="<%= content.sequence || 0 %>">
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-4 mb-4">
                         <label for="title_hn" class="form-label">Title (Hindi) <span class="text-muted">(Optional)</span></label>

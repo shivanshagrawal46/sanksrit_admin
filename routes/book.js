@@ -446,9 +446,14 @@ router.get('/chapter/:chapterId/contents', async (req, res) => {
         if (!chapter) {
             return res.status(404).send('Chapter not found');
         }
+        const category = chapter.category;
+        const book = chapter.book;
         res.render('book/chapter/contents', {
             contents,
             chapter,
+            category,
+            book,
+            username: req.session ? req.session.username : null,
             activePage: 'book',
             activeSection: 'chapter'
         });
@@ -551,7 +556,7 @@ router.post('/content/add', upload.array('images', 10), async (req, res) => {
         const { 
             category, book, chapter, 
             title_hn, title_en, title_hinglish,
-            meaning, details, extra, video_links 
+            meaning, details, extra, video_links, sequence: seqInput
         } = req.body;
         
         // Process video links
@@ -560,9 +565,12 @@ router.post('/content/add', upload.array('images', 10), async (req, res) => {
         // Process uploaded images
         const imageLinks = req.files ? req.files.map(file => `/uploads/books/${file.filename}`) : [];
 
-        // Get max sequence for this chapter to assign next sequence number
-        const maxContent = await BookContent.findOne({ chapter }).sort({ sequence: -1 });
-        const nextSequence = maxContent ? maxContent.sequence + 1 : 1;
+        // Get sequence: use provided value or auto-assign next
+        let sequence = parseInt(seqInput, 10);
+        if (isNaN(sequence) || sequence < 1) {
+            const maxContent = await BookContent.findOne({ chapter }).sort({ sequence: -1 });
+            sequence = maxContent ? maxContent.sequence + 1 : 1;
+        }
 
         const content = new BookContent({
             category,
@@ -576,7 +584,7 @@ router.post('/content/add', upload.array('images', 10), async (req, res) => {
             extra,
             images: imageLinks,
             video_links: videoLinksArray,
-            sequence: nextSequence
+            sequence
         });
 
         await content.save();
@@ -631,7 +639,7 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
         const { 
             category, book, chapter, 
             title_hn, title_en, title_hinglish,
-            meaning, details, extra, video_links 
+            meaning, details, extra, video_links, sequence: seqInput
         } = req.body;
 
         // Process video links
@@ -652,6 +660,10 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
             extra,
             video_links: videoLinksArray
         };
+        const sequence = parseInt(seqInput, 10);
+        if (!isNaN(sequence) && sequence >= 0) {
+            updateData.sequence = sequence;
+        }
 
         // Only update images if new ones were uploaded
         if (imageLinks.length > 0) {
@@ -706,6 +718,47 @@ router.post('/content/edit/:id', upload.array('images', 10), async (req, res) =>
         } else {
             res.redirect('/book/content');
         }
+    }
+});
+
+// Bulk Delete Content
+router.post('/content/delete-bulk', async (req, res) => {
+    try {
+        const { ids, chapter: chapterId, deleteAll } = req.body;
+        let redirectUrl = '/book/content';
+
+        if (deleteAll === '1') {
+            if (chapterId) {
+                await BookContent.deleteMany({ chapter: chapterId });
+                const chapter = await BookChapter.findById(chapterId).populate('book');
+                if (chapter?.book) {
+                    const bookCategory = await BookName.findById(chapter.book._id).populate('category');
+                    if (bookCategory?.category) {
+                        redirectUrl = `/book/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chapterId}`;
+                    }
+                }
+            } else {
+                await BookContent.deleteMany({});
+            }
+        } else if (ids && Array.isArray(ids) && ids.length > 0) {
+            const content = await BookContent.findOne({ _id: ids[0] });
+            await BookContent.deleteMany({ _id: { $in: ids } });
+            if (content?.chapter) {
+                const chId = content.chapter._id || content.chapter;
+                const chapter = await BookChapter.findById(chId).populate('book');
+                if (chapter?.book) {
+                    const bookCategory = await BookName.findById(chapter.book._id).populate('category');
+                    if (bookCategory?.category) {
+                        redirectUrl = `/book/category/${bookCategory.category._id}/book/${bookCategory._id}/chapter/${chId}`;
+                    }
+                }
+            }
+        }
+
+        res.redirect(redirectUrl + '?success=' + encodeURIComponent('Content deleted successfully'));
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 });
 

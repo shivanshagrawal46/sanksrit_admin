@@ -132,12 +132,28 @@
 
         <%- include('../../partials/geeta-nav', { activeTab: 'content' }) %>
 
+        <!-- Bulk Actions -->
+        <% if (contents && contents.length > 0) { %>
+        <div class="content-card mb-3">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <button type="button" class="btn btn-outline-danger btn-sm" id="deleteSelected" disabled>Delete Selected</button>
+                <form action="/geeta/content/delete-bulk" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete ALL content?');">
+                    <input type="hidden" name="deleteAll" value="1">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Delete All</button>
+                </form>
+            </div>
+        </div>
+        <% } %>
+
         <!-- Content List -->
         <div class="content-card">
+            <form id="bulkDeleteForm" action="/geeta/content/delete-bulk" method="POST">
             <div class="table-responsive">
                 <table class="table content-table">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAll" title="Select All"></th>
+                            <th>Seq</th>
                             <th>Title (Hindi)</th>
                             <th>Title (English)</th>
                             <th>Geeta</th>
@@ -151,6 +167,8 @@
                         <% if (contents && contents.length > 0) { %>
                             <% contents.forEach(function(content) { %>
                                 <tr>
+                                    <td><input type="checkbox" class="content-checkbox" name="ids" value="<%= content._id %>"></td>
+                                    <td><%= content.sequence || 0 %></td>
                                     <td class="content-preview"><%= content.title_hn %></td>
                                     <td class="content-preview"><%= content.title_en %></td>
                                     <td><%= content.book.name %></td>
@@ -166,11 +184,12 @@
                                 </tr>
                             <% }); %>
                         <% } else { %>
-                            <tr><td colspan="7" class="text-center">No content found.</td></tr>
+                            <tr><td colspan="9" class="text-center">No content found.</td></tr>
                         <% } %>
                     </tbody>
                 </table>
             </div>
+            </form>
         </div>
     </main>
 
@@ -216,5 +235,24 @@
     </div>
 
     <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('selectAll')?.addEventListener('change', function() {
+            document.querySelectorAll('.content-checkbox').forEach(cb => cb.checked = this.checked);
+            document.getElementById('deleteSelected').disabled = !this.checked && !document.querySelector('.content-checkbox:checked');
+        });
+        document.querySelectorAll('.content-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const anyChecked = document.querySelector('.content-checkbox:checked');
+                document.getElementById('deleteSelected').disabled = !anyChecked;
+                document.getElementById('selectAll').checked = document.querySelectorAll('.content-checkbox:checked').length === document.querySelectorAll('.content-checkbox').length;
+            });
+        });
+        document.getElementById('deleteSelected')?.addEventListener('click', function() {
+            const checked = document.querySelectorAll('.content-checkbox:checked');
+            if (checked.length && confirm('Delete ' + checked.length + ' selected item(s)?')) {
+                document.getElementById('bulkDeleteForm').submit();
+            }
+        });
+    </script>
 </body>
 </html> 

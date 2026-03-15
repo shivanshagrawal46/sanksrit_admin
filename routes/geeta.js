@@ -908,7 +908,7 @@ router.post('/content/upload-excel', upload.single('excelFile'), async (req, res
     try {
         const chapterId = req.body.chapter;
         const categoryId = req.body.category;
-        const bookId = req.body.book;
+        const bookId = req.body.book || req.body.geeta;  // Geeta form uses "geeta" for book
         const hasContext = chapterId && categoryId && bookId;
         
         if (!req.file) {

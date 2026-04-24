@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { OAuth2Client } = require('google-auth-library');
+const appleSignin = require('apple-signin-auth');
 
 // Helper function to decode JWT without verification (for debugging)
 const decodeJWTWithoutVerification = (token) => {
@@ -112,15 +113,68 @@ if (configValidation.warnings.length > 0) {
 
 const client = new OAuth2Client();
 
+// ==================== APPLE SIGN-IN CONFIG ====================
+// Helper function for Apple Sign-In structured logging
+const logAppleSignIn = (level, message, data = {}) => {
+    const timestamp = new Date().toISOString();
+    const logData = {
+        timestamp,
+        level,
+        service: 'AppleSignIn',
+        message,
+        ...data
+    };
+
+    if (level === 'ERROR') {
+        console.error(`[${timestamp}] [${level}] ${message}`, JSON.stringify(logData, null, 2));
+    } else if (level === 'WARN') {
+        console.warn(`[${timestamp}] [${level}] ${message}`, JSON.stringify(logData, null, 2));
+    } else {
+        console.log(`[${timestamp}] [${level}] ${message}`, JSON.stringify(logData, null, 2));
+    }
+};
+
+// Apple Client IDs (Bundle ID for iOS, Services ID for Web/Android)
+// Supports multiple comma-separated values for multi-platform apps
+const APPLE_CLIENT_IDS = (process.env.APPLE_CLIENT_ID || '')
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean);
+
+const validateAppleConfig = () => {
+    const issues = [];
+    const warnings = [];
+
+    if (APPLE_CLIENT_IDS.length === 0) {
+        warnings.push('APPLE_CLIENT_ID not set in environment - Apple Sign-In will be disabled');
+    }
+
+    return { issues, warnings };
+};
+
+const appleConfigValidation = validateAppleConfig();
+logAppleSignIn('INFO', 'Apple Sign-In Configuration', {
+    hasAppleClientId: APPLE_CLIENT_IDS.length > 0,
+    clientIdCount: APPLE_CLIENT_IDS.length,
+    configIssues: appleConfigValidation.issues,
+    configWarnings: appleConfigValidation.warnings
+});
+
+if (appleConfigValidation.warnings.length > 0) {
+    logAppleSignIn('WARN', 'Apple Configuration Warnings', {
+        warnings: appleConfigValidation.warnings
+    });
+}
+
 // ==================== REGISTER ====================
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, phone, password, confirmPassword } = req.body;
         
-        // Validate required fields
-        if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
-            return res.status(400).json({ error: 'All fields are required.' });
+        // Validate required fields (phone is optional)
+        if (!firstName || !lastName || !email || !password || !confirmPassword) {
+            return res.status(400).json({ error: 'First name, last name, email, password and confirm password are required.' });
         }
         
         // Validate passwords match
@@ -139,14 +193,10 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered.' });
         }
         
-        // Create new user
-        const user = new User({ 
-            firstName, 
-            lastName, 
-            email, 
-            phone, 
-            password 
-        });
+        // Create new user (phone is optional)
+        const userData = { firstName, lastName, email, password };
+        if (phone) userData.phone = phone;
+        const user = new User(userData);
         await user.save();
         
         // Generate JWT token
@@ -188,9 +238,12 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Invalid email or password.' });
         }
         
-        // Check if user has a password (not Google-only account)
+        // Check if user has a password (not SSO-only account)
         if (!user.password) {
-            return res.status(400).json({ error: 'This account uses Google Sign-In. Please login with Google.' });
+            let provider = 'Social Sign-In';
+            if (user.appleId && !user.googleId) provider = 'Apple Sign-In';
+            else if (user.googleId && !user.appleId) provider = 'Google Sign-In';
+            return res.status(400).json({ error: `This account uses ${provider}. Please login with ${provider}.` });
         }
         
         // Verify password
@@ -499,6 +552,312 @@ router.post('/google', async (req, res) => {
         }
 
         res.status(statusCode).json({ 
+            error: errorMessage,
+            details: errorDetails,
+            requestId,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// ==================== APPLE SIGN-IN ====================
+// POST /api/auth/apple
+router.post('/apple', async (req, res) => {
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    const startTime = Date.now();
+
+    try {
+        logAppleSignIn('INFO', 'Apple Sign-In Request Received', {
+            requestId,
+            method: req.method,
+            url: req.url,
+            hasBody: !!req.body,
+            bodyKeys: req.body ? Object.keys(req.body) : [],
+            timestamp: new Date().toISOString()
+        });
+
+        // Step 1: Validate request body
+        // Accept both `identityToken` (Flutter sign_in_with_apple) and `idToken` for flexibility.
+        // firstName / lastName are only returned by Apple on FIRST sign-in, so the client must forward them.
+        const {
+            identityToken: rawIdentityToken,
+            idToken,
+            firstName: rawFirstName,
+            lastName: rawLastName,
+            email: providedEmail,
+            nonce
+        } = req.body || {};
+
+        const identityToken = rawIdentityToken || idToken;
+
+        if (!identityToken) {
+            logAppleSignIn('WARN', 'Apple Sign-In Failed: No identity token', {
+                requestId,
+                bodyKeys: req.body ? Object.keys(req.body) : []
+            });
+            return res.status(400).json({
+                error: 'No identity token provided',
+                requestId,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        if (APPLE_CLIENT_IDS.length === 0) {
+            logAppleSignIn('ERROR', 'Apple Sign-In Failed: APPLE_CLIENT_ID not configured', {
+                requestId
+            });
+            return res.status(500).json({
+                error: 'Apple Sign-In is not configured on the server. Please set APPLE_CLIENT_ID.',
+                requestId,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Strip "Bearer " prefix if present
+        let cleanToken = identityToken;
+        if (typeof cleanToken === 'string' && cleanToken.startsWith('Bearer ')) {
+            cleanToken = cleanToken.replace(/^Bearer\s+/i, '');
+            logAppleSignIn('WARN', 'Identity token had Bearer prefix - removed', { requestId });
+        }
+
+        // Step 2: Inspect token structure (for diagnostics)
+        const decodedToken = decodeJWTWithoutVerification(cleanToken);
+        logAppleSignIn('INFO', 'Identity Token Structure Analysis', {
+            requestId,
+            isValidStructure: decodedToken.isValidStructure,
+            hasError: !!decodedToken.error,
+            issuer: decodedToken.payload?.iss,
+            audience: decodedToken.payload?.aud,
+            email: decodedToken.payload?.email
+        });
+
+        // Step 3: Verify identity token with Apple
+        let applePayload;
+        const verificationStartTime = Date.now();
+        try {
+            applePayload = await appleSignin.verifyIdToken(cleanToken, {
+                audience: APPLE_CLIENT_IDS,
+                ignoreExpiration: false,
+                nonce: nonce || undefined
+            });
+
+            logAppleSignIn('INFO', 'Apple Token Verification Success', {
+                requestId,
+                sub: applePayload.sub,
+                email: applePayload.email,
+                emailVerified: applePayload.email_verified,
+                isPrivateEmail: applePayload.is_private_email,
+                durationMs: Date.now() - verificationStartTime
+            });
+        } catch (verifyError) {
+            logAppleSignIn('ERROR', 'Apple Token Verification Failed', {
+                requestId,
+                errorMessage: verifyError.message,
+                errorName: verifyError.name,
+                durationMs: Date.now() - verificationStartTime
+            });
+
+            let errorMessage = 'Failed to verify Apple identity token';
+            let statusCode = 401;
+            const msg = (verifyError.message || '').toLowerCase();
+
+            if (msg.includes('audience') || msg.includes('aud')) {
+                errorMessage = 'Token audience mismatch. Please check APPLE_CLIENT_ID configuration.';
+            } else if (msg.includes('expired') || msg.includes('exp')) {
+                errorMessage = 'Apple token has expired. Please sign in again.';
+            } else if (msg.includes('nonce')) {
+                errorMessage = 'Nonce mismatch. Please retry the Apple sign-in flow.';
+            } else if (msg.includes('signature')) {
+                errorMessage = 'Apple token signature verification failed.';
+            } else if (msg.includes('issuer') || msg.includes('iss')) {
+                errorMessage = 'Invalid token issuer.';
+            }
+
+            return res.status(statusCode).json({
+                error: errorMessage,
+                details: verifyError.message,
+                requestId,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Step 4: Extract user info
+        // Apple only returns email on first sign-in. Subsequent sign-ins may omit email.
+        // `sub` (Apple unique user id) is always present and stable.
+        const appleUserId = applePayload.sub;
+        const appleEmail = applePayload.email || providedEmail || null;
+        const isPrivateEmail = !!applePayload.is_private_email;
+
+        if (!appleUserId) {
+            logAppleSignIn('ERROR', 'Apple Token Missing sub (user id)', { requestId });
+            return res.status(400).json({
+                error: 'Invalid Apple token: missing user identifier.',
+                requestId,
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Sanitize name inputs (only used when creating a new user)
+        const cleanFirstName = typeof rawFirstName === 'string' ? rawFirstName.trim().slice(0, 50) : '';
+        const cleanLastName = typeof rawLastName === 'string' ? rawLastName.trim().slice(0, 50) : '';
+
+        // Step 5: Find or create user
+        const dbOperationStartTime = Date.now();
+        let user;
+        let userAction = 'existing';
+
+        try {
+            // Prefer lookup by Apple user id (stable across sign-ins, survives email change / private relay)
+            user = await User.findOne({ appleId: appleUserId });
+
+            // Fall back to email lookup (to link an existing local/Google account with Apple)
+            if (!user && appleEmail) {
+                user = await User.findOne({ email: appleEmail });
+            }
+
+            if (!user) {
+                // Create new user
+                logAppleSignIn('INFO', 'Creating new Apple user', {
+                    requestId,
+                    appleId: appleUserId,
+                    hasEmail: !!appleEmail
+                });
+
+                if (!appleEmail) {
+                    // Apple didn't return an email and client didn't forward one
+                    // This only happens if user revoked email sharing after first sign-in AND
+                    // we never persisted the account (edge case).
+                    logAppleSignIn('WARN', 'No email available for new Apple user', { requestId });
+                    return res.status(400).json({
+                        error: 'Email not available from Apple. Please try signing in again and allow sharing your email.',
+                        requestId,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+
+                user = new User({
+                    firstName: cleanFirstName || 'Apple',
+                    lastName: cleanLastName || 'User',
+                    email: appleEmail,
+                    appleId: appleUserId,
+                    authProvider: 'apple',
+                    picture: ''
+                });
+
+                await user.save();
+                userAction = 'created';
+            } else {
+                // Existing user - link Apple ID if missing and update name if still generic
+                let dirty = false;
+
+                if (!user.appleId) {
+                    user.appleId = appleUserId;
+                    dirty = true;
+                    userAction = 'linked';
+                }
+
+                if (!user.authProvider || user.authProvider === 'local') {
+                    // Keep authProvider as primary SSO if not already set
+                    if (!user.googleId) {
+                        user.authProvider = 'apple';
+                        dirty = true;
+                    }
+                }
+
+                // Only fill in name if it looks empty / placeholder and client provided one
+                const namePlaceholder = !user.firstName || user.firstName === 'Apple';
+                if (namePlaceholder && cleanFirstName) {
+                    user.firstName = cleanFirstName;
+                    dirty = true;
+                }
+                if ((!user.lastName || user.lastName === 'User') && cleanLastName) {
+                    user.lastName = cleanLastName;
+                    dirty = true;
+                }
+
+                if (dirty) {
+                    await user.save();
+                    if (userAction === 'existing') userAction = 'updated';
+                }
+            }
+        } catch (dbError) {
+            logAppleSignIn('ERROR', 'Database Operation Failed', {
+                requestId,
+                errorMessage: dbError.message,
+                errorName: dbError.name
+            });
+            throw dbError;
+        }
+
+        // Step 6: Generate JWT token
+        let token;
+        try {
+            token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        } catch (jwtError) {
+            logAppleSignIn('ERROR', 'JWT Token Generation Failed', {
+                requestId,
+                errorMessage: jwtError.message
+            });
+            throw jwtError;
+        }
+
+        const totalDuration = Date.now() - startTime;
+        logAppleSignIn('INFO', 'Apple Sign-In Completed Successfully', {
+            requestId,
+            userId: user._id.toString(),
+            email: user.email,
+            userAction,
+            isPrivateEmail,
+            dbOperationMs: Date.now() - dbOperationStartTime,
+            totalMs: totalDuration
+        });
+
+        return res.json({
+            success: true,
+            token,
+            user: {
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phone: user.phone,
+                picture: user.picture,
+                isAdmin: user.isAdmin,
+                authProvider: user.authProvider,
+                isPrivateEmail
+            },
+            requestId,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        const duration = Date.now() - startTime;
+        logAppleSignIn('ERROR', 'Apple Sign-In Failed - Unexpected Error', {
+            requestId,
+            errorMessage: error.message,
+            errorName: error.name,
+            durationMs: duration
+        });
+
+        let statusCode = 500;
+        let errorMessage = 'Failed to authenticate with Apple';
+        let errorDetails = error.message;
+
+        if (error.name === 'ValidationError') {
+            statusCode = 400;
+            errorMessage = 'Invalid user data';
+        } else if (error.code === 11000) {
+            statusCode = 409;
+            errorMessage = 'Account conflict. Please contact support.';
+        } else if (error.name === 'MongoError' || error.name === 'MongoServerError') {
+            statusCode = 500;
+            errorMessage = 'Database error occurred';
+            if (process.env.NODE_ENV === 'production') {
+                errorDetails = 'Internal server error';
+            }
+        }
+
+        return res.status(statusCode).json({
             error: errorMessage,
             details: errorDetails,
             requestId,

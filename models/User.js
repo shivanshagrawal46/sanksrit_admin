@@ -32,7 +32,8 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: function() {
-            return !this.googleId; // Password is required only if not using Google login
+            // Password is required only for local (non-SSO) accounts
+            return !this.googleId && !this.appleId;
         }
     },
     isAdmin: {
@@ -43,6 +44,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         unique: true,
         sparse: true
+    },
+    appleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google', 'apple'],
+        default: 'local'
     },
     picture: {
         type: String,

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const mongoose = require('mongoose');
 const Media = require('../models/Media');
 const fs = require('fs');
 
@@ -67,14 +68,22 @@ router.post('/upload', (req, res, next) => {
             return res.redirect('/media');
         }
 
-        const media = await Media.create({
+        // Only attach uploadedBy if it's a valid Mongo ObjectId.
+        // Admin sessions use the literal string 'admin' which is NOT an ObjectId,
+        // so we skip it to avoid Media validation failure.
+        const sessionUserId = req.session && req.session.userId;
+        const mediaDoc = {
             filename: req.file.filename,
             originalname: req.file.originalname,
             mimetype: req.file.mimetype,
             size: req.file.size,
-            url: `/uploads/media/${req.file.filename}`,
-            uploadedBy: req.session.userId
-        });
+            url: `/uploads/media/${req.file.filename}`
+        };
+        if (sessionUserId && mongoose.Types.ObjectId.isValid(sessionUserId)) {
+            mediaDoc.uploadedBy = sessionUserId;
+        }
+
+        const media = await Media.create(mediaDoc);
 
         req.flash('success', 'File uploaded successfully');
         res.redirect('/media');

@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# User-uploaded files - keep folders (via .gitkeep) but ignore contents
+public/uploads/**/*
+!public/uploads/**/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

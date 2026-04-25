@@ -5,21 +5,28 @@ const path = require('path');
 const Media = require('../models/Media');
 const fs = require('fs');
 
+// Ensure upload directory exists (recreated automatically if removed)
+const MEDIA_UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads', 'media');
+if (!fs.existsSync(MEDIA_UPLOAD_DIR)) {
+    fs.mkdirSync(MEDIA_UPLOAD_DIR, { recursive: true });
+}
+
 // Configure multer for image upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/media');
+        cb(null, MEDIA_UPLOAD_DIR);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
+    limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB per file
     fileFilter: function (req, file, cb) {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-            return cb(new Error('Only image files are allowed!'), false);
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+            return cb(new Error('Only image files are allowed (jpg, jpeg, png, gif, webp).'), false);
         }
         cb(null, true);
     }
@@ -40,7 +47,20 @@ router.get('/', async (req, res) => {
 });
 
 // Upload new media
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', (req, res, next) => {
+    upload.single('file')(req, res, function (err) {
+        if (err) {
+            console.error('[MEDIA UPLOAD] multer error:', err);
+            let msg = err.message || 'Error uploading file';
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                msg = 'File too large. Maximum size is 25 MB.';
+            }
+            req.flash('error', msg);
+            return res.redirect('/media');
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         if (!req.file) {
             req.flash('error', 'Please select a file to upload');
@@ -59,7 +79,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         req.flash('success', 'File uploaded successfully');
         res.redirect('/media');
     } catch (error) {
-        req.flash('error', 'Error uploading file');
+        console.error('[MEDIA UPLOAD] save error:', error);
+        req.flash('error', `Error uploading file: ${error.message}`);
         res.redirect('/media');
     }
 });
